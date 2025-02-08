@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->integer('category_id');
-            $table->string('harga');
             $table->string('alamat');
             $table->string('image')->nullable();
             $table->timestamps();

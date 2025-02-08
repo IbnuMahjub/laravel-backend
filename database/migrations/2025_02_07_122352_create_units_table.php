@@ -16,6 +16,8 @@ return new class extends Migration
             $table->integer('property_id');
             $table->enum('tipe', ['Deluxe', 'Standard', 'Suite']);
             $table->string('harga_unit');
+            $table->integer('jumlah_kamar');
+            $table->string('deskripsi');
             $table->string('image')->nullable();
             $table->timestamps();
         });

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\LoginController;
+use App\Http\Controllers\PropertiController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -24,9 +25,24 @@ Route::post('/login', [LoginController::class, 'login']);
 Route::middleware('auth:sanctum')->post('/logout', [LoginController::class, 'logout']);
 
 Route::middleware('auth:sanctum')->group(function () {
+    // Category
     Route::get('/category', [CategoryController::class, 'index']);
     Route::get('/category/{id}', [CategoryController::class, 'show']);
     Route::post('/category', [CategoryController::class, 'store']);
     Route::put('/category/{id}', [CategoryController::class, 'update']);
     Route::delete('/category/{id}', [CategoryController::class, 'destroy']);
+
+    // Properti
+    Route::get('/property', [PropertiController::class, 'index']);
+    Route::get('/property/{id}', [PropertiController::class, 'show']);
+    Route::post('/property', [PropertiController::class, 'store']);
+    Route::put('/property/{id}', [PropertiController::class, 'update']);
+    Route::delete('/property/{id}', [PropertiController::class, 'destroy']);
+
+    // Unit
+    Route::get('/units', [PropertiController::class, 'getUnits']);
+    Route::get('/units/{id}', [PropertiController::class, 'getUnitsByPropertiId']);
+    Route::post('/units', [PropertiController::class, 'storeUnit']);
+    Route::put('/units/{id}', [PropertiController::class, 'updateUnit']);
+    Route::delete('/units/{id}', [PropertiController::class, 'destroyUnit']);
 });
