@@ -18,7 +18,11 @@ class PropertiController extends Controller
                 return [
                     'id' => $property->id,
                     'name' => $property->name,
-                    'category' => $property->category ? $property->category->name : null,
+                    'category' => [
+                        'id' => $property->category ? $property->category->id : null,
+                        'name' => $property->category ? $property->category->name : null
+                    ],
+                    // 'category' => $property->category ? $property->category->name : null,
                     'alamat' => $property->alamat,
                     'image' => $imageUrl
                 ];
@@ -56,7 +60,11 @@ class PropertiController extends Controller
             $dataProperti = [
                 'id' => $properti->id,
                 'name' => $properti->name,
-                'category' => $properti->category ? $properti->category->name : null,
+                'category' => [
+                    'id' => $properti->category ? $properti->category->id : null,
+                    'name' => $properti->category ? $properti->category->name : null
+                ],
+                // 'category' => $properti->category ? $properti->category->name : null,
                 'harga' => $properti->harga,
                 'alamat' => $properti->alamat,
                 'image' => $imageUrl
