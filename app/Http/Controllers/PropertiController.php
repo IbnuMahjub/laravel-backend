@@ -22,7 +22,6 @@ class PropertiController extends Controller
                         'id' => $property->category ? $property->category->id : null,
                         'name' => $property->category ? $property->category->name : null
                     ],
-                    // 'category' => $property->category ? $property->category->name : null,
                     'alamat' => $property->alamat,
                     'image' => $imageUrl
                 ];
@@ -81,7 +80,6 @@ class PropertiController extends Controller
         }
     }
 
-
     public function store(Request $request)
     {
         try {
@@ -95,11 +93,28 @@ class PropertiController extends Controller
             if ($request->hasFile('image')) {
                 $validated['image'] = $request->file('image')->store('properti-images');
             }
+
             $savedProperti = Property::create($validated);
+
             $properti = Property::with('category')->find($savedProperti->id);
+
+            $imageUrl = $properti->image ? Storage::url($properti->image) : null;
+            $response = [
+                'id' => $properti->id,
+                'name' => $properti->name,
+                'category' => [
+                    'id' => $properti->category ? $properti->category->id : null,
+                    'name' => $properti->category ? $properti->category->name : null,
+                ],
+                'category_id' => $properti->category_id,
+                'category_name' => $properti->category->name,
+                'alamat' => $properti->alamat,
+                'image' => $imageUrl,
+            ];
+
             return response()->json([
                 'status' => 'success',
-                'data' => $properti,
+                'data' => $response,
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
@@ -108,7 +123,6 @@ class PropertiController extends Controller
             ], 500);
         }
     }
-
     public function update(Request $request, $id)
     {
         try {
@@ -119,20 +133,41 @@ class PropertiController extends Controller
                     'message' => 'Property not found.'
                 ], 404);
             }
+
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'category_id' => 'required|exists:categories,id',
                 'alamat' => 'required|string',
                 'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             ]);
+
             if ($request->hasFile('image')) {
+                if ($properti->image) {
+                    Storage::delete($properti->image);
+                }
                 $validated['image'] = $request->file('image')->store('properti-images');
             }
+
             $properti->update($validated);
+
+            $imageUrl = $properti->image ? Storage::url($properti->image) : null;
+
             $properti = Property::with('category')->find($id);
+
             return response()->json([
                 'status' => 'success',
-                'data' => $properti,
+                'data' => [
+                    'id' => $properti->id,
+                    'name' => $properti->name,
+                    'category' => [
+                        'id' => $properti->category ? $properti->category->id : null,
+                        'name' => $properti->category ? $properti->category->name : null
+                    ],
+                    'category_id' => $properti->category_id,
+                    'category_name' => $properti->category->name,
+                    'alamat' => $properti->alamat,
+                    'image' => $imageUrl,
+                ],
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -141,6 +176,38 @@ class PropertiController extends Controller
             ], 500);
         }
     }
+
+    public function destroy($id)
+    {
+        try {
+            $properti = Property::find($id);
+
+            if (!$properti) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Property not found.'
+                ], 404);
+            }
+
+            if ($properti->image) {
+                Storage::delete($properti->image);
+            }
+
+            $properti->delete();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Property deleted successfully.'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+
 
     public function getUnits()
     {
