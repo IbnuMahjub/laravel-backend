@@ -20,6 +20,7 @@ class PropertiController extends Controller
                     'name' => $property->name,
                     'slug' => $property->slug,
                     'category' => [
+
                         'id' => $property->category ? $property->category->id : null,
                         'name' => $property->category ? $property->category->name : null
                     ],
@@ -89,7 +90,7 @@ class PropertiController extends Controller
                 'name' => 'required|string|max:255',
                 'category_id' => 'required|exists:categories,id',
                 'alamat' => 'required|string',
-                'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+                'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             ]);
 
             if ($request->hasFile('image')) {
@@ -152,6 +153,8 @@ class PropertiController extends Controller
             }
 
             $properti->update($validated);
+            $properti->slug = null;
+            $properti->save();
 
             $imageUrl = $properti->image ? Storage::url($properti->image) : null;
 
@@ -229,7 +232,7 @@ class PropertiController extends Controller
                 $imageUrls = [];
                 if ($unit->images) {
                     $imageUrls = array_map(function ($imagePath) {
-                        return Storage::url($imagePath);  // Mendapatkan URL untuk setiap gambar
+                        return Storage::url($imagePath);
                     }, $unit->images);
                 }
 
@@ -237,6 +240,8 @@ class PropertiController extends Controller
                     'id' => $unit->id,
                     'tipe' => $unit->tipe,
                     'property' => [
+                        // 'id' => $unit->property->id,
+                        // 'name' => $unit->property->name
                         'id' => $unit->property ? $unit->property->id : null,
                         'name' => $unit->property ? $unit->property->name : null
                     ],
@@ -272,16 +277,39 @@ class PropertiController extends Controller
     public function unitShow($id)
     {
         try {
-            $unit = Unit::with('property')->find($id);
+            $unit = Unit::with('property')->find($id);  // Mengambil unit berdasarkan ID
             if (!$unit) {
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Unit not found.'
                 ], 404);
             }
+
+            // Menangani gambar
+            $imageUrls = [];
+            if ($unit->images) {
+                $imageUrls = array_map(function ($imagePath) {
+                    return Storage::url($imagePath);  // Mengambil URL gambar menggunakan Storage
+                }, $unit->images);
+            }
+
+            // Format data yang akan dikirim dalam response
+            $dataUnit = [
+                'id' => $unit->id,
+                'tipe' => $unit->tipe,
+                'property' => [
+                    'id' => $unit->property ? $unit->property->id : null,
+                    'name' => $unit->property ? $unit->property->name : null
+                ],
+                'harga_unit' => $unit->harga_unit,
+                'jumlah_kamar' => $unit->jumlah_kamar,
+                'deskripsi' => $unit->deskripsi,
+                'images' => $imageUrls
+            ];
+
             return response()->json([
                 'status' => 'success',
-                'data' => $unit
+                'data' => $dataUnit
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -290,6 +318,7 @@ class PropertiController extends Controller
             ], 500);
         }
     }
+
     public function storeUnit(Request $request)
     {
         try {
@@ -379,15 +408,27 @@ class PropertiController extends Controller
 
     public function destroyUnit($id)
     {
-        $unit = Unit::find($id);
-        if (!$unit) {
+        try {
+            $unit = Unit::find($id);
+            if (!$unit) {
+                return response()->json([
+                    'message' => 'Unit not found.'
+                ], 404);
+            }
+            if ($unit->images) {
+                foreach ($unit->images as $image) {
+                    Storage::delete($image);
+                }
+            }
+            $unit->delete();
             return response()->json([
-                'message' => 'Unit not found.'
-            ], 404);
+                'message' => 'Unit deleted successfully.'
+            ], 200);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred: ' . $th->getMessage()
+            ]);
         }
-        $unit->delete();
-        return response()->json([
-            'message' => 'Unit deleted successfully.'
-        ], 200);
     }
 }

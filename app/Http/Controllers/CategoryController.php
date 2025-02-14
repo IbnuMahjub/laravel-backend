@@ -47,6 +47,9 @@ class CategoryController extends Controller
         ]);
 
         $category->update($validated);
+
+        $category->slug = null;
+        $category->save();
         return response()->json($category);
     }
 
