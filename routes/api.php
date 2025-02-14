@@ -41,7 +41,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Unit
     Route::get('/units', [PropertiController::class, 'getUnits']);
-    Route::get('/units/{id}', [PropertiController::class, 'getUnitsByPropertiId']);
+    Route::get('/units/{id}', [PropertiController::class, 'unitShow']);
     Route::post('/units', [PropertiController::class, 'storeUnit']);
     Route::put('/units/{id}', [PropertiController::class, 'updateUnit']);
     Route::delete('/units/{id}', [PropertiController::class, 'destroyUnit']);

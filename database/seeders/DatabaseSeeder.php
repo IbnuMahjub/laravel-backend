@@ -42,12 +42,10 @@ class DatabaseSeeder extends Seeder
 
         Category::create([
             'name' => 'Pendidikan',
-            'slug' => 'pendidikan'
         ]);
 
         Category::create([
             'name' => 'Olahraga',
-            'slug' => 'olahraga'
         ]);
 
         Property::create([

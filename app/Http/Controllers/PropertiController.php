@@ -18,6 +18,7 @@ class PropertiController extends Controller
                 return [
                     'id' => $property->id,
                     'name' => $property->name,
+                    'slug' => $property->slug,
                     'category' => [
                         'id' => $property->category ? $property->category->id : null,
                         'name' => $property->category ? $property->category->name : null
@@ -28,9 +29,9 @@ class PropertiController extends Controller
             });
             if ($properti->isEmpty()) {
                 return response()->json([
-                    'status' => 'error',
-                    'message' => 'No properties found.'
-                ], 404);
+                    'status' => 'kosong',
+                    'data' => []
+                ], 200);
             }
 
             return response()->json([
@@ -59,6 +60,7 @@ class PropertiController extends Controller
             $dataProperti = [
                 'id' => $properti->id,
                 'name' => $properti->name,
+                'slug' => $properti->slug,
                 'category' => [
                     'id' => $properti->category ? $properti->category->id : null,
                     'name' => $properti->category ? $properti->category->name : null
@@ -102,6 +104,7 @@ class PropertiController extends Controller
             $response = [
                 'id' => $properti->id,
                 'name' => $properti->name,
+                'slug' => $properti->slug,
                 'category' => [
                     'id' => $properti->category ? $properti->category->id : null,
                     'name' => $properti->category ? $properti->category->name : null,
@@ -159,6 +162,7 @@ class PropertiController extends Controller
                 'data' => [
                     'id' => $properti->id,
                     'name' => $properti->name,
+                    'slug' => $properti->slug,
                     'category' => [
                         'id' => $properti->category ? $properti->category->id : null,
                         'name' => $properti->category ? $properti->category->name : null
@@ -209,54 +213,168 @@ class PropertiController extends Controller
 
 
 
+    // public function getUnits()
+    // {
+    //     $units = Unit::with('property')->get();
+    //     return response()->json($units);
+    // }
+
     public function getUnits()
     {
-        $units = Unit::with('property')->get();
-        return response()->json($units);
+        try {
+            $units = Unit::with('property')->get();
+
+            $dataUnit = $units->map(function ($unit) {
+                // Menangani multiple gambar
+                $imageUrls = [];
+                if ($unit->images) {
+                    $imageUrls = array_map(function ($imagePath) {
+                        return Storage::url($imagePath);  // Mendapatkan URL untuk setiap gambar
+                    }, $unit->images);
+                }
+
+                return [
+                    'id' => $unit->id,
+                    'tipe' => $unit->tipe,
+                    'property' => [
+                        'id' => $unit->property ? $unit->property->id : null,
+                        'name' => $unit->property ? $unit->property->name : null
+                    ],
+                    'harga_unit' => $unit->harga_unit,
+                    'jumlah_kamar' => $unit->jumlah_kamar,
+                    'deskripsi' => $unit->deskripsi,
+                    'images' => $imageUrls  // Mengembalikan array gambar
+                ];
+            });
+
+            if ($units->isEmpty()) {
+                return response()->json([
+                    'status' => 'kosong',
+                    'data' => []
+                ], 200);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $dataUnit
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
-    public function getUnitsByPropertiId($propertiId)
+
+
+
+    public function unitShow($id)
     {
-        $units = Unit::with('property')->where('property_id', $propertiId)->get();
-        return response()->json($units);
+        try {
+            $unit = Unit::with('property')->find($id);
+            if (!$unit) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Unit not found.'
+                ], 404);
+            }
+            return response()->json([
+                'status' => 'success',
+                'data' => $unit
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred: ' . $e->getMessage()
+            ], 500);
+        }
     }
-
     public function storeUnit(Request $request)
     {
-        $validated = $request->validate([
-            'property_id' => 'required|exists:properties,id',
-            'tipe' => 'required|string',
-            'harga_unit' => 'required|numeric',
-            'jumlah_kamer' => 'required|numeric',
-            'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-        ]);
-        if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('unit-images');
+        try {
+            $validated = $request->validate([
+                'property_id' => 'required|exists:properties,id',
+                'tipe' => 'required|string',
+                'harga_unit' => 'required|numeric',
+                'jumlah_kamar' => 'required|numeric',
+                'deskripsi' => 'required|string',
+                'images' => 'required|array|min:1',
+                'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            ]);
+
+            $imagePaths = [];
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $image) {
+                    $imagePaths[] = $image->store('unit-images');
+                }
+            }
+
+            $validated['images'] = $imagePaths;
+
+            $unit = Unit::create($validated);
+
+            $unit->images = array_map(function ($imagePath) {
+                return Storage::url($imagePath);  // Mendapatkan URL gambar
+            }, $unit->images);
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $unit,
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred: ' . $e->getMessage()
+            ], 500);
         }
-        $unit = Unit::create($validated);
-        return response()->json($unit);
     }
+
 
     public function updateUnit(Request $request, $id)
     {
-        $unit = Unit::find($id);
-        if (!$unit) {
+        try {
+            $unit = Unit::find($id);
+            if (!$unit) {
+                return response()->json([
+                    'message' => 'Unit not found.'
+                ], 404);
+            }
+            $validated = $request->validate([
+                'property_id' => 'required|exists:properties,id',
+                'tipe' => 'required|string',
+                'deskripsi' => 'required|string',
+                'harga_unit' => 'required|numeric',
+                'jumlah_kamar' => 'required|numeric',
+                'images' => 'required|array|min:1',
+                'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            ]);
+
+            $imagePaths = [];
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $image) {
+                    $imagePaths[] = $image->store('unit-images');
+                }
+            }
+
+            $validated['images'] = $imagePaths;
+
+            $unit->update($validated);
+
+            $unit->images = array_map(function ($imagePath) {
+                return Storage::url($imagePath);  // Mendapatkan URL gambar
+            }, $unit->images);
+
             return response()->json([
-                'message' => 'Unit not found.'
-            ], 404);
+                'status' => 'success',
+                'data' => $unit,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred: ' . $e->getMessage()
+            ], 500);
         }
-        $validated = $request->validate([
-            'property_id' => 'required|exists:properties,id',
-            'tipe' => 'required|string',
-            'harga_unit' => 'required|numeric',
-            'jumlah_kamer' => 'required|numeric',
-            'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-        ]);
-        if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('unit-images');
-        }
-        $unit->update($validated);
-        return response()->json($unit);
     }
 
     public function destroyUnit($id)

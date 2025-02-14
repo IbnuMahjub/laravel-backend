@@ -18,7 +18,8 @@ return new class extends Migration
             $table->string('harga_unit');
             $table->integer('jumlah_kamar');
             $table->string('deskripsi');
-            $table->string('image')->nullable();
+            // $table->string('image')->nullable();
+            $table->json('images')->nullable();
             $table->timestamps();
         });
     }

@@ -26,10 +26,8 @@ class CategoryController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:categories,name',
-            'slug' => 'required|string|max:255|unique:categories,slug',
         ], [
             'name.unique' => 'name categories sudah ada.',
-            'slug.unique' => 'slug categories sudah ada.',
         ]);
 
         $category = Category::create($validated);
@@ -44,10 +42,8 @@ class CategoryController extends Controller
         }
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:categories,name,' . $category->id,
-            'slug' => 'required|string|max:255|unique:categories,slug,' . $category->id,
         ], [
             'name.unique' => 'name categories sudah ada.',
-            'slug.unique' => 'slug categories sudah ada.',
         ]);
 
         $category->update($validated);
