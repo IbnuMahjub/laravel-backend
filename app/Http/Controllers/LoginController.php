@@ -64,6 +64,4 @@ class LoginController extends Controller
             'data' =>  $user
         ]);
     }
-
-    
 }
