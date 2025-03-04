@@ -4,9 +4,9 @@ namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
-use App\Models\Category;
-use App\Models\Property;
-use App\Models\Unit;
+use App\Models\tm_category;
+use App\Models\tr_property;
+use App\Models\tr_unit;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -40,36 +40,44 @@ class DatabaseSeeder extends Seeder
             'password' => bcrypt('12345')
         ]);
 
-        Category::create([
-            'name' => 'Pendidikan',
+        tm_category::create([
+            'name_category' => 'Pendidikan',
+            'slug' => 'pendidikan'
         ]);
 
-        Category::create([
-            'name' => 'Olahraga',
+        tm_category::create([
+            'name_category' => 'Olahraga',
+            'slug' => 'olahraga'
         ]);
 
-        Property::create([
-            'name' => 'Villa MRXNUNU',
+        tr_property::create([
+            'name_property' => 'Villa MRXNUNU',
+            'slug' => 'villa-mrxnunu',
+            'name_category' => 'Pendidikan',
             'category_id' => 1,
             'alamat' => 'Jl. Raya Cendana, Cendana, Kec. Cendana, Kabupaten Tangerang, Provinsi Banten, 15132',
         ]);
 
-        Property::create([
-            'name' => 'Villa Pelangi',
+        tr_property::create([
+            'name_property' => 'Villa Pelangi',
+            'slug' => 'villa-pelangi',
+            'name_category' => 'Olahraga',
             'category_id' => 2,
             'alamat' => 'Jl. Raya Dukuh Puntang, Dukuh Puntang, Kec. Dukuh Puntang, Kabupaten Cirebon, Provinsi Jawabarat, 12321',
         ]);
 
-        Unit::create([
+        tr_unit::create([
             'property_id' => 1,
+            'name_property' => 'Villa MRXNUNU',
             'tipe' => 'Deluxe',
             'harga_unit' => 'Rp. 500.000',
             'jumlah_kamar' => 10,
             'deskripsi' => 'Unit Deluxe dengan fasilitas lengkap'
         ]);
 
-        Unit::create([
+        tr_unit::create([
             'property_id' => 2,
+            'name_property' => 'Villa Pelangi',
             'tipe' => 'Standard',
             'harga_unit' => 'Rp. 400.000',
             'jumlah_kamar' => 8,

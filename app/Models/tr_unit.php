@@ -5,9 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Unit extends Model
+class tr_unit extends Model
 {
     use HasFactory;
+    protected $table = 'tr_unit';
     protected $fillable = [
         'property_id',
         'tipe',
@@ -17,12 +18,12 @@ class Unit extends Model
         'images', // Tambahkan kolom 'images'
     ];
 
-    // Jika menggunakan tipe data json pada 'images', tambahkan cast
     protected $casts = [
         'images' => 'array', // Pastikan Laravel menganggap 'images' sebagai array
     ];
+
     public function property()
     {
-        return $this->belongsTo(Property::class);
+        return $this->belongsTo(tr_property::class);
     }
 }

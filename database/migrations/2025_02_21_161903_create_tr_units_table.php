@@ -11,15 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('units', function (Blueprint $table) {
+        Schema::create('tr_unit', function (Blueprint $table) {
             $table->id();
             $table->integer('property_id');
+            $table->string('name_property');
             $table->enum('tipe', ['Deluxe', 'Standard', 'Suite']);
             $table->string('harga_unit');
             $table->integer('jumlah_kamar');
             $table->string('deskripsi');
-            // $table->string('image')->nullable();
             $table->json('images')->nullable();
+            $table->integer('is_delete')->default(0);
             $table->timestamps();
         });
     }
@@ -29,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('units');
+        Schema::dropIfExists('tr_units');
     }
 };

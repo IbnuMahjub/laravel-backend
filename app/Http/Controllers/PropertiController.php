@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Property;
-use App\Models\Unit;
+use App\Models\tm_category;
+use App\Models\tr_property;
+use App\Models\tr_unit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -12,33 +13,30 @@ class PropertiController extends Controller
     public function index()
     {
         try {
-            $properti = Property::with('category')->get();
-            $dataProperti = $properti->map(function ($property) {
-                $imageUrl = $property->image ? Storage::url($property->image) : null;
-                return [
-                    'id' => $property->id,
-                    'name' => $property->name,
-                    'slug' => $property->slug,
-                    'category' => [
+            $properti = tr_property::where('is_delete', 0)->with('category')->get();
 
-                        'id' => $property->category ? $property->category->id : null,
-                        'name' => $property->category ? $property->category->name : null
+            $dataProperti = $properti->map(function ($properti) {
+                $imageUrl = $properti->image ? Storage::url($properti->image) : "";
+                return [
+                    'id' => $properti->id,
+                    'name_property' => $properti->name_property,
+                    'name_category' => $properti->name_category,
+                    'slug' => $properti->slug,
+                    'data_category' => [
+                        'id' => $properti->category ? $properti->category->id : "",
+                        'name' => $properti->category ? $properti->category->name_category : ""
                     ],
-                    'alamat' => $property->alamat,
+                    // 'harga' => $properti->harga,
+                    'alamat' => $properti->alamat,
                     'image' => $imageUrl
                 ];
             });
+
             if ($properti->isEmpty()) {
-                return response()->json([
-                    'status' => 'kosong',
-                    'data' => []
-                ], 200);
+                return sendResponse('kosong', []);
             }
 
-            return response()->json([
-                'status' => 'success',
-                'data' => $dataProperti,
-            ], 200);
+            return sendResponse('success', $dataProperti, 'all data properti');
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
@@ -47,34 +45,28 @@ class PropertiController extends Controller
         }
     }
 
+
     public function show($id)
     {
         try {
-            $properti = Property::with('category')->find($id);
+            $properti = tr_property::with('category')->find($id);
             if (!$properti) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Property not found.'
-                ], 404);
+                return sendResponse('kosong', [], 'tidak tersedia');
             }
             $imageUrl = $properti->image ? Storage::url($properti->image) : null;
             $dataProperti = [
                 'id' => $properti->id,
-                'name' => $properti->name,
+                'name_property' => $properti->name_property,
                 'slug' => $properti->slug,
                 'category' => [
-                    'id' => $properti->category ? $properti->category->id : null,
-                    'name' => $properti->category ? $properti->category->name : null
+                    'id' => $properti->category ? $properti->category->id : "",
+                    'name' => $properti->category ? $properti->category->name_category : ""
                 ],
-                // 'category' => $properti->category ? $properti->category->name : null,
                 'harga' => $properti->harga,
                 'alamat' => $properti->alamat,
                 'image' => $imageUrl
             ];
-            return response()->json([
-                'status' => 'success',
-                'data' => $dataProperti,
-            ], 200);
+            return sendResponse('success', $dataProperti, 'all data properti');
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
@@ -87,8 +79,8 @@ class PropertiController extends Controller
     {
         try {
             $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'category_id' => 'required|exists:categories,id',
+                'name_property' => 'required|string|max:255',
+                'category_id' => 'required|exists:tm_category,id',
                 'alamat' => 'required|string',
                 'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             ]);
@@ -97,21 +89,23 @@ class PropertiController extends Controller
                 $validated['image'] = $request->file('image')->store('properti-images');
             }
 
-            $savedProperti = Property::create($validated);
+            $nameCategory = tm_category::find($validated['category_id']);
+            $validated['name_category'] = $nameCategory ? $nameCategory->name_category : "kosong";
+            $savedProperti = tr_property::create($validated);
 
-            $properti = Property::with('category')->find($savedProperti->id);
+            $properti = tr_property::with('category')->find($savedProperti->id);
 
             $imageUrl = $properti->image ? Storage::url($properti->image) : null;
             $response = [
                 'id' => $properti->id,
-                'name' => $properti->name,
+                'name_property' => $properti->name_property,
                 'slug' => $properti->slug,
                 'category' => [
-                    'id' => $properti->category ? $properti->category->id : null,
-                    'name' => $properti->category ? $properti->category->name : null,
+                    'id' => $properti->category ? $properti->category->id : "",
+                    'name_category' => $properti->category ? $properti->category->name_category : "",
                 ],
                 'category_id' => $properti->category_id,
-                'category_name' => $properti->category->name,
+                'name_category' => $properti->name_category,
                 'alamat' => $properti->alamat,
                 'image' => $imageUrl,
             ];
@@ -130,7 +124,7 @@ class PropertiController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            $properti = Property::find($id);
+            $properti = tr_property::find($id);
             if (!$properti) {
                 return response()->json([
                     'status' => 'error',
@@ -139,8 +133,8 @@ class PropertiController extends Controller
             }
 
             $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'category_id' => 'required|exists:categories,id',
+                'name_property' => 'required|string|max:255',
+                'category_id' => 'required|exists:tm_category,id',
                 'alamat' => 'required|string',
                 'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             ]);
@@ -152,26 +146,29 @@ class PropertiController extends Controller
                 $validated['image'] = $request->file('image')->store('properti-images');
             }
 
+            $nameCategory = tm_category::find($validated['category_id']);
+            $validated['name_category'] = $nameCategory ? $nameCategory->name_category : "kosong";
+
             $properti->update($validated);
             $properti->slug = null;
             $properti->save();
 
             $imageUrl = $properti->image ? Storage::url($properti->image) : null;
 
-            $properti = Property::with('category')->find($id);
+            $properti = tr_property::with('category')->find($id);
 
             return response()->json([
                 'status' => 'success',
                 'data' => [
                     'id' => $properti->id,
-                    'name' => $properti->name,
+                    'name_property' => $properti->name_property,
                     'slug' => $properti->slug,
                     'category' => [
-                        'id' => $properti->category ? $properti->category->id : null,
-                        'name' => $properti->category ? $properti->category->name : null
+                        'id' => $properti->category ? $properti->category->id : "",
+                        'name' => $properti->category ? $properti->category->name : ""
                     ],
                     'category_id' => $properti->category_id,
-                    'category_name' => $properti->category->name,
+                    'name_category' => $properti->name_category,
                     'alamat' => $properti->alamat,
                     'image' => $imageUrl,
                 ],
@@ -187,7 +184,7 @@ class PropertiController extends Controller
     public function destroy($id)
     {
         try {
-            $properti = Property::find($id);
+            $properti = tr_property::find($id);
 
             if (!$properti) {
                 return response()->json([
@@ -199,8 +196,10 @@ class PropertiController extends Controller
             if ($properti->image) {
                 Storage::delete($properti->image);
             }
+            $properti->is_delete = 1;
 
-            $properti->delete();
+            $properti->save();
+            // $properti->delete();
 
             return response()->json([
                 'status' => 'success',
@@ -214,18 +213,10 @@ class PropertiController extends Controller
         }
     }
 
-
-
-    // public function getUnits()
-    // {
-    //     $units = Unit::with('property')->get();
-    //     return response()->json($units);
-    // }
-
     public function getUnits()
     {
         try {
-            $units = Unit::with('property')->get();
+            $units = tr_unit::with('property')->get();
 
             $dataUnit = $units->map(function ($unit) {
                 // Menangani multiple gambar
@@ -242,13 +233,13 @@ class PropertiController extends Controller
                     'property' => [
                         // 'id' => $unit->property->id,
                         // 'name' => $unit->property->name
-                        'id' => $unit->property ? $unit->property->id : null,
-                        'name' => $unit->property ? $unit->property->name : null
+                        'id' => $unit->property ? $unit->property->id : "",
+                        'name' => $unit->property ? $unit->property->name_property : ""
                     ],
                     'harga_unit' => $unit->harga_unit,
                     'jumlah_kamar' => $unit->jumlah_kamar,
                     'deskripsi' => $unit->deskripsi,
-                    'images' => $imageUrls  // Mengembalikan array gambar
+                    'images' => $imageUrls
                 ];
             });
 
@@ -277,7 +268,7 @@ class PropertiController extends Controller
     public function unitShow($id)
     {
         try {
-            $unit = Unit::with('property')->find($id);  // Mengambil unit berdasarkan ID
+            $unit = tr_unit::with('property')->find($id);  // Mengambil unit berdasarkan ID
             if (!$unit) {
                 return response()->json([
                     'status' => 'error',
@@ -341,7 +332,7 @@ class PropertiController extends Controller
 
             $validated['images'] = $imagePaths;
 
-            $unit = Unit::create($validated);
+            $unit = tr_unit::create($validated);
 
             $unit->images = array_map(function ($imagePath) {
                 return Storage::url($imagePath);  // Mendapatkan URL gambar
@@ -363,7 +354,7 @@ class PropertiController extends Controller
     public function updateUnit(Request $request, $id)
     {
         try {
-            $unit = Unit::find($id);
+            $unit = tr_unit::find($id);
             if (!$unit) {
                 return response()->json([
                     'message' => 'Unit not found.'
@@ -409,7 +400,7 @@ class PropertiController extends Controller
     public function destroyUnit($id)
     {
         try {
-            $unit = Unit::find($id);
+            $unit = tr_unit::find($id);
             if (!$unit) {
                 return response()->json([
                     'message' => 'Unit not found.'
