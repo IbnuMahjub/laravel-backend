@@ -2,20 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Category;
+use App\Models\tm_category;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
     public function index()
     {
-        $categories = Category::all();
+        $categories = tm_category::where('is_delete', 0)->get();
         return response()->json($categories);
     }
 
     public function show($id)
     {
-        $category = Category::find($id);
+        $category = tm_category::find($id);
         if (!$category) {
             return response()->json(['message' => 'category not found'], 404);
         }
@@ -25,25 +25,25 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name',
+            'name_category' => 'required|string|max:255|unique:tm_category,name_category',
         ], [
-            'name.unique' => 'name categories sudah ada.',
+            'name_category.unique' => 'name categories sudah ada.',
         ]);
 
-        $category = Category::create($validated);
+        $category = tm_category::create($validated);
         return response()->json($category, 201);
     }
 
     public function update(Request $request, $id)
     {
-        $category = Category::find($id);
+        $category = tm_category::find($id);
         if (!$category) {
             return response()->json(['message' => 'category not found'], 404);
         }
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name,' . $category->id,
+            'name_category' => 'required|string|max:255|unique:tm_category,name_category,' . $category->id,
         ], [
-            'name.unique' => 'name categories sudah ada.',
+            'name_category.unique' => 'name categories sudah ada.',
         ]);
 
         $category->update($validated);
@@ -55,12 +55,14 @@ class CategoryController extends Controller
 
     public function destroy($id)
     {
-        $category = Category::find($id);
+        $category = tm_category::find($id);
         if (!$category) {
             return response()->json(['message' => 'category not found'], 404);
         }
 
-        $category->delete();
+        // $category->delete();
+        $category->is_delete = 1;
+        $category->save();
         return response()->json(['message' => 'category deleted successfully']);
     }
 }

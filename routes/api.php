@@ -4,7 +4,9 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\NewPasswordController;
+use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\PropertiController;
+use App\Http\Controllers\ValueController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -24,6 +26,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::post('/login', [LoginController::class, 'login']);
+Route::post('/login/google', [LoginController::class, 'googleLogin']);
 Route::post('/register', [LoginController::class, 'register']);
 Route::post('email/verification-notification', [EmailVerificationController::class, 'sendVerificationEmail'])->middleware('auth:sanctum');
 Route::get('verify-email/{id}/{hash}', [EmailVerificationController::class, 'verify'])->name('verification.verify')->middleware('auth:sanctum');
@@ -35,6 +38,9 @@ Route::post('reset-password', [NewPasswordController::class, 'reset']);
 Route::middleware('auth:sanctum')->post('/logout', [LoginController::class, 'logout']);
 
 Route::middleware('auth:sanctum')->group(function () {
+    // profile
+    Route::get('/profile', [ProfilController::class, 'profile']);
+
     // Category
     Route::get('/category', [CategoryController::class, 'index']);
     Route::get('/category/{id}', [CategoryController::class, 'show']);
@@ -55,4 +61,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/units', [PropertiController::class, 'storeUnit']);
     Route::put('/units/{id}', [PropertiController::class, 'updateUnit']);
     Route::delete('/units/{id}', [PropertiController::class, 'destroyUnit']);
+
+
+    Route::get('/valueCategory', [ValueController::class, 'value_category']);
+    Route::get('/valueProperty', [ValueController::class, 'value_property']);
 });

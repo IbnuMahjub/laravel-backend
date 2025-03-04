@@ -6,27 +6,21 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Cviebrock\EloquentSluggable\Sluggable;
 
-
-class Property extends Model
+class tm_category extends Model
 {
     use HasFactory, Sluggable;
 
+    protected $table = 'tm_category';
     protected $guarded = ['id'];
-    public function category()
+    public function property()
     {
-        return $this->belongsTo(Category::class);
+        return $this->hasMany(tr_property::class);
     }
-
-    public function units()
-    {
-        return $this->hasMany(Unit::class);
-    }
-
     public function sluggable(): array
     {
         return [
             'slug' => [
-                'source' => 'name'
+                'source' => 'name_category'
             ]
         ];
     }
