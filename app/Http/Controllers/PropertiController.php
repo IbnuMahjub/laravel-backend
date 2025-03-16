@@ -5,15 +5,89 @@ namespace App\Http\Controllers;
 use App\Models\tm_category;
 use App\Models\tr_property;
 use App\Models\tr_unit;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class PropertiController extends Controller
 {
+    public function data_property()
+    {
+        try {
+            $properti = tr_property::where('is_delete', 0)
+                ->with('category')
+                ->get();
+            $dataProperti = $properti->map(function ($properti) {
+                $imageUrl = $properti->image ? Storage::url($properti->image) : "";
+                return [
+                    'id' => $properti->id,
+                    'name_property' => $properti->name_property,
+                    'name_category' => $properti->name_category,
+                    'slug' => $properti->slug,
+                    'data_category' => [
+                        'id' => $properti->category ? $properti->category->id : "",
+                        'name_category' => $properti->category ? $properti->category->name_category : ""
+                    ],
+                    'alamat' => $properti->alamat,
+                    'image' => $imageUrl
+                ];
+            });
+
+            if ($properti->isEmpty()) {
+                return sendResponse('kosong', []);
+            }
+
+            return sendResponse('success', $dataProperti, 'all data properti');
+        } catch (\Throwable $th) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred: ' . $th->getMessage()
+            ], 500);
+        }
+    }
+
+    public function show_data_property($slug)
+    {
+        try {
+            $showProperty = tr_unit::with('property')->where('slug', $slug)->first();
+
+            if (!$showProperty) {
+                return sendResponse('kosong', []);
+            }
+
+            $imageUrl = $showProperty->property->image ? Storage::url($showProperty->property->image) : "";
+            $dataProperti = [
+                // 'id' => $showProperty->property->id,
+                // 'name_property' => $showProperty->property->name_property,
+                // 'name_category' => $showProperty->property->name_category,
+                // 'slug' => $showProperty->property->slug,
+                // 'image' => $imageUrl,
+
+                // 'data_unit' => $showProperty->unit->map(function ($unit) {
+                //     return [
+                //         'harga_unit' => $unit->harga_unit,
+                //         'jumlah_kamar' => $unit->jumlah_kamar,
+                //     ];
+                // })
+            ];
+
+            return sendResponse('success', $dataProperti, 'all data properti');
+        } catch (\Throwable $th) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred: ' . $th->getMessage()
+            ]);
+        }
+    }
+
     public function index()
     {
         try {
-            $properti = tr_property::where('is_delete', 0)->with('category')->get();
+            $properti = tr_property::where('is_delete', 0)
+                ->where('user_id', auth()->user()->id)
+                ->with('category')
+                ->get();
 
             $dataProperti = $properti->map(function ($properti) {
                 $imageUrl = $properti->image ? Storage::url($properti->image) : "";
@@ -24,9 +98,8 @@ class PropertiController extends Controller
                     'slug' => $properti->slug,
                     'data_category' => [
                         'id' => $properti->category ? $properti->category->id : "",
-                        'name' => $properti->category ? $properti->category->name_category : ""
+                        'name_category' => $properti->category ? $properti->category->name_category : ""
                     ],
-                    // 'harga' => $properti->harga,
                     'alamat' => $properti->alamat,
                     'image' => $imageUrl
                 ];
@@ -49,7 +122,7 @@ class PropertiController extends Controller
     public function show($id)
     {
         try {
-            $properti = tr_property::with('category')->find($id);
+            $properti = tr_property::with('category')->where('id', $id)->first();
             if (!$properti) {
                 return sendResponse('kosong', [], 'tidak tersedia');
             }
@@ -60,11 +133,12 @@ class PropertiController extends Controller
                 'slug' => $properti->slug,
                 'category' => [
                     'id' => $properti->category ? $properti->category->id : "",
-                    'name' => $properti->category ? $properti->category->name_category : ""
+                    'name_category' => $properti->category ? $properti->category->name_category : ""
                 ],
-                'harga' => $properti->harga,
+                // 'harga' => $properti->harga,
                 'alamat' => $properti->alamat,
-                'image' => $imageUrl
+                'image' => $imageUrl,
+                'imageOri' => $properti->image
             ];
             return sendResponse('success', $dataProperti, 'all data properti');
         } catch (\Exception $e) {
@@ -88,7 +162,7 @@ class PropertiController extends Controller
             if ($request->hasFile('image')) {
                 $validated['image'] = $request->file('image')->store('properti-images');
             }
-
+            $validated['user_id'] = auth()->user()->id;
             $nameCategory = tm_category::find($validated['category_id']);
             $validated['name_category'] = $nameCategory ? $nameCategory->name_category : "kosong";
             $savedProperti = tr_property::create($validated);
@@ -114,13 +188,22 @@ class PropertiController extends Controller
                 'status' => 'success',
                 'data' => $response,
             ], 201);
-        } catch (\Exception $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'An error occurred: ' . $e->getMessage()
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 400);
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An unexpected error occurred',
+                'details' => $e->getMessage(),
             ], 500);
         }
     }
+
+
     public function update(Request $request, $id)
     {
         try {
@@ -165,7 +248,7 @@ class PropertiController extends Controller
                     'slug' => $properti->slug,
                     'category' => [
                         'id' => $properti->category ? $properti->category->id : "",
-                        'name' => $properti->category ? $properti->category->name : ""
+                        'name_category' => $properti->category ? $properti->category->name_category : ""
                     ],
                     'category_id' => $properti->category_id,
                     'name_category' => $properti->name_category,
@@ -219,7 +302,6 @@ class PropertiController extends Controller
             $units = tr_unit::with('property')->get();
 
             $dataUnit = $units->map(function ($unit) {
-                // Menangani multiple gambar
                 $imageUrls = [];
                 if ($unit->images) {
                     $imageUrls = array_map(function ($imagePath) {
@@ -231,8 +313,6 @@ class PropertiController extends Controller
                     'id' => $unit->id,
                     'tipe' => $unit->tipe,
                     'property' => [
-                        // 'id' => $unit->property->id,
-                        // 'name' => $unit->property->name
                         'id' => $unit->property ? $unit->property->id : "",
                         'name' => $unit->property ? $unit->property->name_property : ""
                     ],
@@ -276,26 +356,31 @@ class PropertiController extends Controller
                 ], 404);
             }
 
-            // Menangani gambar
             $imageUrls = [];
             if ($unit->images) {
                 $imageUrls = array_map(function ($imagePath) {
-                    return Storage::url($imagePath);  // Mengambil URL gambar menggunakan Storage
+                    return Storage::url($imagePath);
                 }, $unit->images);
             }
+            // $oriImage = null;
+            // if ($unit->images) {
+            //     $oriImage = $unit->images;
+            // }
 
             // Format data yang akan dikirim dalam response
             $dataUnit = [
                 'id' => $unit->id,
                 'tipe' => $unit->tipe,
                 'property' => [
-                    'id' => $unit->property ? $unit->property->id : null,
-                    'name' => $unit->property ? $unit->property->name : null
+                    'id' => $unit->property ? $unit->property->id : "",
+                    'name_property' => $unit->property ? $unit->property->name_property : ""
                 ],
+
                 'harga_unit' => $unit->harga_unit,
                 'jumlah_kamar' => $unit->jumlah_kamar,
                 'deskripsi' => $unit->deskripsi,
-                'images' => $imageUrls
+                'images' => $imageUrls,
+                'oriImage' => $unit->images
             ];
 
             return response()->json([
@@ -314,7 +399,7 @@ class PropertiController extends Controller
     {
         try {
             $validated = $request->validate([
-                'property_id' => 'required|exists:properties,id',
+                'property_id' => 'required|exists:tr_property,id',
                 'tipe' => 'required|string',
                 'harga_unit' => 'required|numeric',
                 'jumlah_kamar' => 'required|numeric',
@@ -322,6 +407,10 @@ class PropertiController extends Controller
                 'images' => 'required|array|min:1',
                 'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             ]);
+
+            $nameProperty = tr_property::find($validated['property_id']);
+
+            $validated['name_property'] = $nameProperty ? $nameProperty->name_property : "kosong";
 
             $imagePaths = [];
             if ($request->hasFile('images')) {
@@ -335,7 +424,7 @@ class PropertiController extends Controller
             $unit = tr_unit::create($validated);
 
             $unit->images = array_map(function ($imagePath) {
-                return Storage::url($imagePath);  // Mendapatkan URL gambar
+                return Storage::url($imagePath);
             }, $unit->images);
 
             return response()->json([
@@ -350,6 +439,52 @@ class PropertiController extends Controller
         }
     }
 
+    // public function storeUnit(Request $request)
+    // {
+    //     try {
+    //         $validated = $request->validate([
+    //             'property_id' => 'required|exists:tr_property,id',
+    //             'tipe' => 'required|string',
+    //             'harga_unit' => 'required|numeric',
+    //             'jumlah_kamar' => 'required|numeric',
+    //             'deskripsi' => 'required|string',
+    //             'images' => 'required|array|min:1',
+    //             'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+    //         ]);
+
+    //         $nameProperty = tr_property::find($validated['property_id']);
+    //         $validated['name_property'] = $nameProperty ? $nameProperty->name_property : "kosong";
+
+    //         $imagePaths = [];
+    //         if ($request->hasFile('images')) {
+    //             foreach ($request->file('images') as $image) {
+    //                 $path = $image->store('unit-images');
+    //                 $imagePaths[] = basename($path);
+    //             }
+    //         }
+
+    //         $validated['images'] = json_encode($imagePaths);
+
+    //         $unit = tr_unit::create($validated);
+
+    //         $unit->images = array_map(function ($imageName) {
+    //             return Storage::url('unit-images/' . $imageName);
+    //         }, json_decode($unit->images));
+
+    //         return response()->json([
+    //             'status' => 'success',
+    //             'data' => $unit,
+    //         ], 201);
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'message' => 'An error occurred: ' . $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
+
+
+
 
     public function updateUnit(Request $request, $id)
     {
@@ -361,12 +496,12 @@ class PropertiController extends Controller
                 ], 404);
             }
             $validated = $request->validate([
-                'property_id' => 'required|exists:properties,id',
+                'property_id' => 'required|exists:tr_property,id',
                 'tipe' => 'required|string',
                 'deskripsi' => 'required|string',
                 'harga_unit' => 'required|numeric',
                 'jumlah_kamar' => 'required|numeric',
-                'images' => 'required|array|min:1',
+                'images' => 'array|min:1',
                 'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             ]);
 
@@ -375,14 +510,14 @@ class PropertiController extends Controller
                 foreach ($request->file('images') as $image) {
                     $imagePaths[] = $image->store('unit-images');
                 }
+                $validated['images'] = $imagePaths;
             }
 
-            $validated['images'] = $imagePaths;
 
             $unit->update($validated);
 
             $unit->images = array_map(function ($imagePath) {
-                return Storage::url($imagePath);  // Mendapatkan URL gambar
+                return Storage::url($imagePath);
             }, $unit->images);
 
             return response()->json([

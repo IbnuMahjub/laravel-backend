@@ -5,6 +5,7 @@ namespace Database\Seeders;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 use App\Models\tm_category;
+use App\Models\tm_roleuser;
 use App\Models\tr_property;
 use App\Models\tr_unit;
 use App\Models\User;
@@ -24,20 +25,41 @@ class DatabaseSeeder extends Seeder
         //     'email' => 'test@example.com',
         // ]);
 
+
+        tm_roleuser::create([
+            'role_name' => 'admin'
+        ]);
+
+        tm_roleuser::create([
+            'role_name' => 'user'
+        ]);
+        tm_roleuser::create([
+            'role_name' => 'owner'
+        ]);
+
         User::create([
             'name' => 'sekar',
             'username' => 'sekar',
             'email' => 'sekar@gmail.com',
-            'password' => bcrypt('12345')
+            'password' => bcrypt('12345'),
+            'id_role_user' => 2
+        ]);
+
+        User::create([
+            'name' => 'daus',
+            'username' => 'daus',
+            'email' => 'daus@gmail.com',
+            'password' => bcrypt('12345'),
+            'id_role_user' => 3
         ]);
 
         // akun unit
         User::create([
             'name' => 'Ibnu Mahjub',
             'username' => 'mrxnunu',
-            'is_admin' => 1,
             'email' => 'mrxnunu@gmail.com',
-            'password' => bcrypt('12345')
+            'password' => bcrypt('12345'),
+            'id_role_user' => 1
         ]);
 
         tm_category::create([
@@ -55,6 +77,7 @@ class DatabaseSeeder extends Seeder
             'slug' => 'villa-mrxnunu',
             'name_category' => 'Pendidikan',
             'category_id' => 1,
+            'user_id' => 2,
             'alamat' => 'Jl. Raya Cendana, Cendana, Kec. Cendana, Kabupaten Tangerang, Provinsi Banten, 15132',
         ]);
 
@@ -63,6 +86,7 @@ class DatabaseSeeder extends Seeder
             'slug' => 'villa-pelangi',
             'name_category' => 'Olahraga',
             'category_id' => 2,
+            'user_id' => 2,
             'alamat' => 'Jl. Raya Dukuh Puntang, Dukuh Puntang, Kec. Dukuh Puntang, Kabupaten Cirebon, Provinsi Jawabarat, 12321',
         ]);
 

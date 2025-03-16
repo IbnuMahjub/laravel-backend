@@ -7,32 +7,52 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
+        try {
+            $credentials = $request->validate([
+                'email' => 'required|email',
+                'password' => 'required',
+            ]);
 
-        $user = User::where('email', $credentials['email'])->first();
+            $user = User::where('email', $credentials['email'])->first();
 
-        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+            if (!$user || !Hash::check($credentials['password'], $user->password)) {
+                return response()->json([
+                    'message' => 'Login Gagal.',
+                ], 401);
+            }
+
+            // $role = $user->role_user ? $user->role_user->role_name : null;
+            $token = $user->createToken('YourAppName')->plainTextToken;
+
             return response()->json([
-                'message' => 'Login Gagal.',
-            ], 401);
+                'message' => 'Login Berhasil',
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'username' => $user->username,
+                    'email' => $user->email,
+                    "google_id" => $user->google_id ? $user->google_id : "",
+                    'avatar' => !empty($user->avatar) && Storage::exists($user->avatar) ? Storage::url($user->avatar) : '',  // Menambahkan pengecekan avatar
+                    'accses_role' => [
+                        'id_role_user' => $user->id_role_user,
+                        'role_name' => $user->role_user ? $user->role_user->role_name : ""
+                    ]
+                ],
+                'token' => $token,
+            ], 200);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation error',
+                'errors' => $e->errors(),
+            ], 422);
         }
-
-        $token = $user->createToken('YourAppName')->plainTextToken;
-
-        return response()->json([
-            'message' => 'Login Berhasil',
-            'user' => $user,
-            'token' => $token,
-        ], 200);
     }
 
     public function logout(Request $request)
@@ -72,10 +92,10 @@ class LoginController extends Controller
             ], 422);
         }
     }
-    
 
 
-    
+
+
     public function googleLogin(Request $request)
     {
         $user = User::where('email', $request->email)->first();
@@ -98,5 +118,4 @@ class LoginController extends Controller
             'token' => $token,
         ], 200);
     }
-
 }

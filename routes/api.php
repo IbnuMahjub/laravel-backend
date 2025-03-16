@@ -6,6 +6,7 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\NewPasswordController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\PropertiController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\ValueController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -33,13 +34,19 @@ Route::get('verify-email/{id}/{hash}', [EmailVerificationController::class, 'ver
 
 Route::post('forgot-password', [NewPasswordController::class, 'forgotPassword']);
 Route::post('reset-password', [NewPasswordController::class, 'reset']);
+Route::get('/data_property', [PropertiController::class, 'data_property']);
+Route::get('/data_property/{slug}', [PropertiController::class, 'show_data_property']);
 
 
 Route::middleware('auth:sanctum')->post('/logout', [LoginController::class, 'logout']);
 
 Route::middleware('auth:sanctum')->group(function () {
+
+    Route::get('/users', [UserController::class, 'index'])->middleware('isAdmin');
+
     // profile
     Route::get('/profile', [ProfilController::class, 'profile']);
+    Route::put('/profile', [ProfilController::class, 'update']);
 
     // Category
     Route::get('/category', [CategoryController::class, 'index']);
