@@ -17,10 +17,11 @@ return new class extends Migration
             $table->string('name_category');
             $table->string('slug');
             $table->integer('category_id');
-            $table->integer('is_delete')->default(0);
             $table->string('alamat');
             $table->string('image')->nullable();
-
+            $table->integer('is_delete')->default(0);
+            $table->integer('is_publish')->default(0);
+            $table->integer('user_id');
             $table->timestamps();
         });
     }

@@ -11,11 +11,12 @@ class tr_unit extends Model
     protected $table = 'tr_unit';
     protected $fillable = [
         'property_id',
+        'name_property',
         'tipe',
         'harga_unit',
         'jumlah_kamar',
         'deskripsi',
-        'images', // Tambahkan kolom 'images'
+        'images',
     ];
 
     protected $casts = [
@@ -26,4 +27,9 @@ class tr_unit extends Model
     {
         return $this->belongsTo(tr_property::class);
     }
+
+    // public function unit()
+    // {
+    //     return $this->hasMany(tr_unit::class, 'property_id');
+    // }
 }

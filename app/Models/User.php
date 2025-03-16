@@ -47,7 +47,6 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
-
     public function sendPasswordResetNotification($token)
     {
 
@@ -55,4 +54,11 @@ class User extends Authenticatable
 
         $this->notify(new ResetPasswordNotification($url));
     }
+
+    public function role_user()
+    {
+        return $this->belongsTo(tm_roleuser::class, 'id_role_user');
+    }
+
+
 }
