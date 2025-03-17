@@ -47,29 +47,63 @@ class PropertiController extends Controller
         }
     }
 
+    // public function show_data_property($slug)
+    // {
+    //     try {
+    //         $showProperty = tr_property::with('category')->where('slug', $slug)->first();
+
+    //         if (!$showProperty) {
+    //             return sendResponse('kosong', []);
+    //         }
+
+    //         $imageUrl = $showProperty->image ? Storage::url($showProperty->image) : "";
+    //         $dataProperti = [
+    //             'id' => $showProperty->id,
+    //             'name_property' => $showProperty->name_property,
+    //             'name_category' => $showProperty->name_category,
+    //             'slug' => $showProperty->slug,
+    //             'image' => $imageUrl,
+    //         ];
+
+    //         return sendResponse('success', $dataProperti, 'all data properti');
+    //     } catch (\Throwable $th) {
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'message' => 'An error occurred: ' . $th->getMessage()
+    //         ]);
+    //     }
+    // }
     public function show_data_property($slug)
     {
         try {
-            $showProperty = tr_unit::with('property')->where('slug', $slug)->first();
+            $showProperty = tr_property::with(['category', 'unit'])->where('slug', $slug)->first();
 
             if (!$showProperty) {
                 return sendResponse('kosong', []);
             }
 
-            $imageUrl = $showProperty->property->image ? Storage::url($showProperty->property->image) : "";
-            $dataProperti = [
-                // 'id' => $showProperty->property->id,
-                // 'name_property' => $showProperty->property->name_property,
-                // 'name_category' => $showProperty->property->name_category,
-                // 'slug' => $showProperty->property->slug,
-                // 'image' => $imageUrl,
+            $imageUrl = $showProperty->image ? Storage::url($showProperty->image) : "";
 
-                // 'data_unit' => $showProperty->unit->map(function ($unit) {
-                //     return [
-                //         'harga_unit' => $unit->harga_unit,
-                //         'jumlah_kamar' => $unit->jumlah_kamar,
-                //     ];
-                // })
+            // Ambil data unit yang terkait dengan property_id yang sesuai
+            $units = $showProperty->unit->map(function ($unit) {
+                return [
+                    'id' => $unit->id,
+                    'name_property' => $unit->name_property,
+                    'tipe' => $unit->tipe,
+                    'harga_unit' => $unit->harga_unit,
+                    'jumlah_kamar' => $unit->jumlah_kamar,
+                    'deskripsi' => $unit->deskripsi,
+                    'images' => $unit->images ? array_map(fn($img) => Storage::url($img), $unit->images) : [],
+                ];
+            });
+
+            $dataProperti = [
+                'id' => $showProperty->id,
+                'name_property' => $showProperty->name_property,
+                'name_category' => $showProperty->category->name_category ? $showProperty->category->name_category : "",
+                'slug' => $showProperty->slug,
+                'image' => $imageUrl,
+                'units' => $units, // Tambahkan data unit ke dalam response
             ];
 
             return sendResponse('success', $dataProperti, 'all data properti');
@@ -80,6 +114,7 @@ class PropertiController extends Controller
             ]);
         }
     }
+
 
     public function index()
     {
