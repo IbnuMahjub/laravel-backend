@@ -19,7 +19,7 @@ class tr_property extends Model
 
     public function unit()
     {
-        return $this->hasMany(tr_unit::class);
+        return $this->hasMany(tr_unit::class, 'property_id');
     }
     public function sluggable(): array
     {

@@ -63,14 +63,14 @@ class DatabaseSeeder extends Seeder
         ]);
 
         tm_category::create([
-            'name_category' => 'Pendidikan',
-            'slug' => 'pendidikan'
+            'name_category' => 'Villa',
+            'slug' => 'villa'
+        ]);
+        tm_category::create([
+            'name_category' => 'Hotel',
+            'slug' => 'hotel'
         ]);
 
-        tm_category::create([
-            'name_category' => 'Olahraga',
-            'slug' => 'olahraga'
-        ]);
 
         tr_property::create([
             'name_property' => 'Villa MRXNUNU',
