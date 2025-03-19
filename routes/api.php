@@ -4,6 +4,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\NewPasswordController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\PropertiController;
 use App\Http\Controllers\UserController;
@@ -37,6 +38,8 @@ Route::post('reset-password', [NewPasswordController::class, 'reset']);
 Route::get('/data_property', [PropertiController::class, 'data_property']);
 Route::get('/data_property/{slug}', [PropertiController::class, 'show_data_property']);
 
+Route::post('/booking', [OrderController::class, 'booking']);
+Route::get('/booking/{kode_pemesanan}', [OrderController::class, 'get_order']);
 
 Route::middleware('auth:sanctum')->post('/logout', [LoginController::class, 'logout']);
 
