@@ -94,7 +94,7 @@ class DatabaseSeeder extends Seeder
             'property_id' => 1,
             'name_property' => 'Villa MRXNUNU',
             'tipe' => 'Deluxe',
-            'harga_unit' => 'Rp. 500.000',
+            'harga_unit' => '500.000',
             'jumlah_kamar' => 10,
             'deskripsi' => 'Unit Deluxe dengan fasilitas lengkap'
         ]);
@@ -103,7 +103,7 @@ class DatabaseSeeder extends Seeder
             'property_id' => 2,
             'name_property' => 'Villa Pelangi',
             'tipe' => 'Standard',
-            'harga_unit' => 'Rp. 400.000',
+            'harga_unit' => '400.000',
             'jumlah_kamar' => 8,
             'deskripsi' => 'Unit Standard dengan fasilitas dasar'
         ]);
