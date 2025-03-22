@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\DataOrderController;
 use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\NewPasswordController;
@@ -79,4 +80,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/valueCategory', [ValueController::class, 'value_category']);
     Route::get('/valueProperty', [ValueController::class, 'value_property']);
+
+    Route::get('/data_orders', [DataOrderController::class, 'get_data_order']);
 });
