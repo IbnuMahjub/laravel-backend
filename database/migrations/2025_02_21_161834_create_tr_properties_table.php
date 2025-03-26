@@ -17,7 +17,13 @@ return new class extends Migration
             $table->string('name_category');
             $table->string('slug');
             $table->integer('category_id');
-            $table->string('alamat');
+            $table->string('alamat')->nullable();
+            $table->string('negara')->nullable();
+            $table->string('provinsi')->nullable();
+            $table->string('kota')->nullable();
+            $table->string('kecamatan')->nullable();
+            $table->string('latitude')->nullable();
+            $table->string('longitude')->nullable();
             $table->string('image')->nullable();
             $table->integer('is_delete')->default(0);
             $table->integer('is_publish')->default(0);
