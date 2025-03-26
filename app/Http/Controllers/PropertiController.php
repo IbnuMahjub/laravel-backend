@@ -25,12 +25,17 @@ class PropertiController extends Controller
                     'name_property' => $properti->name_property,
                     'name_category' => $properti->name_category,
                     'slug' => $properti->slug,
+                    'negara' => $properti->negara,
+                    'kota' => $properti->kota,
+                    'kecamatan' => $properti->kecamatan,
+                    'latitude' => $properti->latitude,
+                    'longitude' => $properti->longitude,
+                    'alamat' => $properti->alamat,
+                    'image' => $imageUrl,
                     'data_category' => [
                         'id' => $properti->category ? $properti->category->id : "",
                         'name_category' => $properti->category ? $properti->category->name_category : ""
                     ],
-                    'alamat' => $properti->alamat,
-                    'image' => $imageUrl
                 ];
             });
 
@@ -46,33 +51,6 @@ class PropertiController extends Controller
             ], 500);
         }
     }
-
-    // public function show_data_property($slug)
-    // {
-    //     try {
-    //         $showProperty = tr_property::with('category')->where('slug', $slug)->first();
-
-    //         if (!$showProperty) {
-    //             return sendResponse('kosong', []);
-    //         }
-
-    //         $imageUrl = $showProperty->image ? Storage::url($showProperty->image) : "";
-    //         $dataProperti = [
-    //             'id' => $showProperty->id,
-    //             'name_property' => $showProperty->name_property,
-    //             'name_category' => $showProperty->name_category,
-    //             'slug' => $showProperty->slug,
-    //             'image' => $imageUrl,
-    //         ];
-
-    //         return sendResponse('success', $dataProperti, 'all data properti');
-    //     } catch (\Throwable $th) {
-    //         return response()->json([
-    //             'status' => 'error',
-    //             'message' => 'An error occurred: ' . $th->getMessage()
-    //         ]);
-    //     }
-    // }
     public function show_data_property($slug)
     {
         try {
@@ -84,7 +62,6 @@ class PropertiController extends Controller
 
             $imageUrl = $showProperty->image ? Storage::url($showProperty->image) : "";
 
-            // Ambil data unit yang terkait dengan property_id yang sesuai
             $units = $showProperty->unit->map(function ($unit) {
                 return [
                     'id' => $unit->id,
@@ -103,7 +80,13 @@ class PropertiController extends Controller
                 'name_category' => $showProperty->category->name_category ? $showProperty->category->name_category : "",
                 'slug' => $showProperty->slug,
                 'image' => $imageUrl,
-                'units' => $units, // Tambahkan data unit ke dalam response
+                'negara' => $showProperty->negara,
+                'kota' => $showProperty->kota,
+                'alamat' => $showProperty->alamat,
+                'kecamatan' => $showProperty->kecamatan,
+                'latitude' => $showProperty->latitude,
+                'longitude' => $showProperty->longitude,
+                'units' => $units,
             ];
 
             return sendResponse('success', $dataProperti, 'all data properti');
@@ -170,7 +153,6 @@ class PropertiController extends Controller
                     'id' => $properti->category ? $properti->category->id : "",
                     'name_category' => $properti->category ? $properti->category->name_category : ""
                 ],
-                // 'harga' => $properti->harga,
                 'alamat' => $properti->alamat,
                 'image' => $imageUrl,
                 'imageOri' => $properti->image
@@ -192,6 +174,11 @@ class PropertiController extends Controller
                 'category_id' => 'required|exists:tm_category,id',
                 'alamat' => 'required|string',
                 'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+                'negara' => 'required|string',
+                'kota' => 'required|string',
+                'kecamatan' => 'required|string',
+                'latitude' => 'required|string',
+                'longitude' => 'required|string',
             ]);
 
             if ($request->hasFile('image')) {
@@ -215,6 +202,11 @@ class PropertiController extends Controller
                 ],
                 'category_id' => $properti->category_id,
                 'name_category' => $properti->name_category,
+                'negara' => $properti->negara,
+                'kota' => $properti->kota,
+                'kecamatan' => $properti->kecamatan,
+                'latitude' => $properti->latitude,
+                'longitude' => $properti->longitude,
                 'alamat' => $properti->alamat,
                 'image' => $imageUrl,
             ];

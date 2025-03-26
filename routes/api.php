@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\DataOrderController;
 use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\NewPasswordController;
@@ -40,6 +41,10 @@ Route::get('/data_property/{slug}', [PropertiController::class, 'show_data_prope
 
 Route::post('/booking', [OrderController::class, 'booking']);
 Route::get('/booking/{kode_pemesanan}', [OrderController::class, 'get_order']);
+Route::post('/invoiceCreate', [OrderController::class, 'invoiceCreate']);
+Route::get('/invoice/{no_invoice}', [OrderController::class, 'get_invoice']);
+Route::post('/midtrans-callback', [OrderController::class, 'handleMidtransCallback']);
+
 
 Route::middleware('auth:sanctum')->post('/logout', [LoginController::class, 'logout']);
 
@@ -75,4 +80,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/valueCategory', [ValueController::class, 'value_category']);
     Route::get('/valueProperty', [ValueController::class, 'value_property']);
+
+    Route::get('/data_orders', [DataOrderController::class, 'get_data_order']);
 });

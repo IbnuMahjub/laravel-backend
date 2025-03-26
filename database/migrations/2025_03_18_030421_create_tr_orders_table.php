@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('tr_order', function (Blueprint $table) {
             $table->id();
+            $table->string('kode_pemesanan');
             $table->integer('property_id');
             $table->integer('unit_id');
             $table->integer('user_id')->nullable();
@@ -26,7 +27,6 @@ return new class extends Migration
             $table->text('catatan')->nullable();
             $table->string('status');
             $table->string('total_harga');
-            $table->string('kode_pemesanan');
             $table->timestamps();
         });
     }

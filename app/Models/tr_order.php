@@ -38,4 +38,9 @@ class tr_order extends Model
             $order->status = 'unpaid';
         });
     }
+
+    public function invoices()
+    {
+        return $this->hasMany(tr_invoice::class, 'kode_pemesanan', 'kode_pemesanan');
+    }
 }
