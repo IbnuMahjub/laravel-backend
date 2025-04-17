@@ -21,6 +21,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->boolean('id_role_user')->default(false);
+            $table->text('api_token')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

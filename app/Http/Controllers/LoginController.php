@@ -30,6 +30,8 @@ class LoginController extends Controller
 
             // $role = $user->role_user ? $user->role_user->role_name : null;
             $token = $user->createToken('YourAppName')->plainTextToken;
+            $user->api_token = $token;
+            $user->save();
 
             return response()->json([
                 'message' => 'Login Berhasil',
@@ -61,6 +63,9 @@ class LoginController extends Controller
         $user->tokens->each(function ($token) {
             $token->delete();
         });
+
+        $user->api_token = null;
+        $user->save();
 
         return response()->json(['message' => 'Logged out successfully']);
     }

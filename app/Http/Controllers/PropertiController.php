@@ -375,7 +375,7 @@ class PropertiController extends Controller
     public function unitShow($id)
     {
         try {
-            $unit = tr_unit::with('property')->find($id);  // Mengambil unit berdasarkan ID
+            $unit = tr_unit::with('property')->find($id);
             if (!$unit) {
                 return response()->json([
                     'status' => 'error',
@@ -465,53 +465,6 @@ class PropertiController extends Controller
             ], 500);
         }
     }
-
-    // public function storeUnit(Request $request)
-    // {
-    //     try {
-    //         $validated = $request->validate([
-    //             'property_id' => 'required|exists:tr_property,id',
-    //             'tipe' => 'required|string',
-    //             'harga_unit' => 'required|numeric',
-    //             'jumlah_kamar' => 'required|numeric',
-    //             'deskripsi' => 'required|string',
-    //             'images' => 'required|array|min:1',
-    //             'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-    //         ]);
-
-    //         $nameProperty = tr_property::find($validated['property_id']);
-    //         $validated['name_property'] = $nameProperty ? $nameProperty->name_property : "kosong";
-
-    //         $imagePaths = [];
-    //         if ($request->hasFile('images')) {
-    //             foreach ($request->file('images') as $image) {
-    //                 $path = $image->store('unit-images');
-    //                 $imagePaths[] = basename($path);
-    //             }
-    //         }
-
-    //         $validated['images'] = json_encode($imagePaths);
-
-    //         $unit = tr_unit::create($validated);
-
-    //         $unit->images = array_map(function ($imageName) {
-    //             return Storage::url('unit-images/' . $imageName);
-    //         }, json_decode($unit->images));
-
-    //         return response()->json([
-    //             'status' => 'success',
-    //             'data' => $unit,
-    //         ], 201);
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'status' => 'error',
-    //             'message' => 'An error occurred: ' . $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
-
-
-
 
     public function updateUnit(Request $request, $id)
     {

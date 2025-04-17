@@ -32,21 +32,36 @@ return [
 
         'pusher' => [
             'driver' => 'pusher',
-            'key' => env('PUSHER_APP_KEY'),
-            'secret' => env('PUSHER_APP_SECRET'),
-            'app_id' => env('PUSHER_APP_ID'),
+            'key' => env('LARAVEL_ECHO_KEY'),
+            'secret' => env('LARAVEL_ECHO_SECRET'),
+            'app_id' => env('LARAVEL_ECHO_APP_ID'),
             'options' => [
-                'cluster' => env('PUSHER_APP_CLUSTER'),
-                'host' => env('PUSHER_HOST') ?: 'api-'.env('PUSHER_APP_CLUSTER', 'mt1').'.pusher.com',
-                'port' => env('PUSHER_PORT', 443),
-                'scheme' => env('PUSHER_SCHEME', 'https'),
-                'encrypted' => true,
-                'useTLS' => env('PUSHER_SCHEME', 'https') === 'https',
-            ],
-            'client_options' => [
-                // Guzzle client options: https://docs.guzzlephp.org/en/stable/request-options.html
+                'host' => env('LARAVEL_ECHO_HOST', '127.0.0.1'),
+                'port' => env('LARAVEL_ECHO_PORT', 6001),
+                'scheme' => 'http',
+                'encrypted' => false,
+                'useTLS' => false,
             ],
         ],
+
+        // default
+        // 'pusher' => [
+        //     'driver' => 'pusher',
+        //     'key' => env('PUSHER_APP_KEY'),
+        //     'secret' => env('PUSHER_APP_SECRET'),
+        //     'app_id' => env('PUSHER_APP_ID'),
+        //     'options' => [
+        //         'cluster' => env('PUSHER_APP_CLUSTER'),
+        //         'host' => env('PUSHER_HOST') ?: 'api-'.env('PUSHER_APP_CLUSTER', 'mt1').'.pusher.com',
+        //         'port' => env('PUSHER_PORT', 443),
+        //         'scheme' => env('PUSHER_SCHEME', 'https'),
+        //         'encrypted' => true,
+        //         'useTLS' => env('PUSHER_SCHEME', 'https') === 'https',
+        //     ],
+        //     'client_options' => [
+        //         // Guzzle client options: https://docs.guzzlephp.org/en/stable/request-options.html
+        //     ],
+        // ],
 
         'ably' => [
             'driver' => 'ably',
