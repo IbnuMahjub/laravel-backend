@@ -5,6 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\tr_invoice;
 use App\Models\tr_order;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use App\Events\OrderPaidEvent;
+use App\Events\SendMessage;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -122,12 +128,6 @@ class OrderController extends Controller
                 ]
             ];
             return sendResponse('success', $dataInvoice, 'Invoice retrieved successfully.');
-
-            // return response()->json([
-            //     'status' => 'success',
-            //     'message' => 'Invoice retrieved successfully.',
-            //     'data' => $invoice
-            // ]);
         } catch (\Throwable $th) {
             return response()->json([
                 'status' => 'error',
@@ -135,39 +135,6 @@ class OrderController extends Controller
             ]);
         }
     }
-
-    // public function handleMidtransCallback(Request $request)
-    // {
-    //     try {
-    //         $serverKey = config('midtrans.server_key');
-    //         $hashed = hash("sha512", $request->order_id . $request->status_code . $request->gross_amount . $serverKey);
-
-    //         if ($hashed !== $request->signature_key) {
-    //             return response()->json(['status' => 'error', 'message' => 'Invalid Signature'], 403);
-    //         }
-
-    //         $order = tr_order::where('kode_pemesanan', $request->order_id)->first();
-    //         if (!$order) {
-    //             return response()->json(['status' => 'error', 'message' => 'Order not found'], 404);
-    //         }
-
-    //         if ($request->transaction_status == 'settlement' || $request->transaction_status == 'capture') {
-    //             $order->update(['status' => 'paid']);
-    //         } elseif ($request->transaction_status == 'pending') {
-    //             $order->update(['status' => 'pending']);
-    //         } elseif ($request->transaction_status == 'expire' || $request->transaction_status == 'cancel') {
-    //             $order->update(['status' => 'failed']);
-    //         }
-
-    //         return response()->json([
-    //             'status' => 'success',
-    //             'message' => 'Payment status updated',
-    //             'data' => $order
-    //         ]);
-    //     } catch (\Throwable $th) {
-    //         return response()->json(['status' => 'error', 'message' => $th->getMessage()], 500);
-    //     }
-    // }
 
     public function handleMidtransCallback(Request $request)
     {
@@ -193,8 +160,32 @@ class OrderController extends Controller
                         'kode_pemesanan' => $order->kode_pemesanan,
                         'total_harga' => $request->gross_amount, // Total harga sesuai pembayaran
                         'status' => 'paid',
-                        'user_id' => $order->user_id, 
+                        'user_id' => $order->user_id,
                     ]);
+                }
+
+
+                try {
+
+                    $property = \App\Models\tr_property::find($order->property_id);
+                    $owner = \App\Models\User::find($property->user_id);
+
+                    if ($owner) {
+
+                        $token = $owner->api_token;
+                        if (!$token) {
+                            $token = $owner->createToken('PropertyOwnerToken')->plainTextToken;
+
+                            $owner->api_token = $token;
+                            $owner->save();
+                        }
+
+                        Http::withToken($token)
+                            ->timeout(5)
+                            ->get(env('APP_URL') . '/api/send');
+                    }
+                } catch (\Throwable $e) {
+                    Log::error("Failed to notify /api/send: " . $e->getMessage());
                 }
             } elseif ($request->transaction_status == 'pending') {
                 $order->update(['status' => 'pending']);
@@ -212,4 +203,166 @@ class OrderController extends Controller
         }
     }
 
+    public function countOrder()
+    {
+        try {
+
+            $dataPaidorder = DB::table('tr_order as to2')
+                ->join('tr_property as tp', 'to2.property_id', '=', 'tp.id')
+                ->join('users as u', 'tp.user_id', '=', 'u.id')
+                ->where('to2.status', 'paid')
+                ->where('u.id', auth()->user()->id)
+                ->select(
+                    'to2.kode_pemesanan',
+                    'to2.user_id',
+                    'to2.username',
+                    'to2.status',
+                    'to2.created_at as waktu_pemesanan',
+                    'to2.property_id',
+                    'to2.unit_id',
+                    'to2.name_property',
+                    'to2.harga_unit',
+                    'to2.jumlah_kamar',
+                    'to2.catatan',
+                    'to2.tanggal_check_in',
+                    'to2.tanggal_check_out',
+                    'to2.jumlah_hari',
+                    'tp.name_property as nama_properti_asli',
+                    'u.name as owner_property'
+                )
+                ->get();
+
+            $totalPaidOrder = $dataPaidorder->count();
+
+
+            $dataFix = $dataPaidorder->map(function ($item) {
+                foreach ($item as $key => $value) {
+                    if (is_null($value)) {
+                        $item->$key = "";
+                    }
+                }
+                return $item;
+            });
+
+
+            return response()->json([
+                'count' => $totalPaidOrder,
+                'dataorder' => $dataFix
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $th->getMessage()
+            ]);
+        }
+    }
+
+    // test
+    // public function send($userId = null)
+    // {
+    //     if (!$userId && auth()->check()) {
+    //         $userId = auth()->user()->id;
+    //     }
+
+    //     if (!$userId) {
+    //         return response()->json(['message' => 'User ID is required'], 400);
+    //     }
+
+    //     $dataPaidorder = DB::table('tr_order as to2')
+    //         ->join('tr_property as tp', 'to2.property_id', '=', 'tp.id')
+    //         ->join('users as u', 'tp.user_id', '=', 'u.id')
+    //         ->where('to2.status', 'paid')
+    //         ->where('u.id', $userId)
+    //         ->select(
+    //             'to2.kode_pemesanan',
+    //             'to2.user_id',
+    //             'to2.username',
+    //             'to2.status',
+    //             'to2.created_at as waktu_pemesanan',
+    //             'to2.property_id',
+    //             'to2.unit_id',
+    //             'to2.name_property',
+    //             'to2.harga_unit',
+    //             'to2.jumlah_kamar',
+    //             'to2.catatan',
+    //             'to2.tanggal_check_in',
+    //             'to2.tanggal_check_out',
+    //             'to2.jumlah_hari',
+    //             'tp.name_property as nama_properti_asli',
+    //             'u.name as owner_property'
+    //         )
+    //         ->get();
+
+    //     $totalPaidOrder = $dataPaidorder->count();
+
+    //     $dataFix = $dataPaidorder->map(function ($item) {
+    //         foreach ($item as $key => $value) {
+    //             if (is_null($value)) {
+    //                 $item->$key = "";
+    //             }
+    //         }
+    //         return $item;
+    //     });
+
+    //     broadcast(new SendMessage($dataFix->toArray(), $totalPaidOrder));
+
+    //     return response()->json([
+    //         'message' => 'Order new event sent!',
+    //     ]);
+    // }
+
+
+    public function send()
+    {
+        $dataPaidorder = DB::table('tr_order as to2')
+            ->join('tr_property as tp', 'to2.property_id', '=', 'tp.id')
+            ->join('users as u', 'tp.user_id', '=', 'u.id')
+            ->where('to2.status', 'paid')
+            ->where('u.id', auth()->user()->id)
+            ->select(
+                'to2.kode_pemesanan',
+                'to2.user_id',
+                'to2.username',
+                'to2.status',
+                'to2.created_at as waktu_pemesanan',
+                'to2.property_id',
+                'to2.unit_id',
+                'to2.name_property',
+                'to2.harga_unit',
+                'to2.jumlah_kamar',
+                'to2.catatan',
+                'to2.tanggal_check_in',
+                'to2.tanggal_check_out',
+                'to2.jumlah_hari',
+                'tp.name_property as nama_properti_asli',
+                'u.name as owner_property'
+            )
+            ->get();
+
+        $totalPaidOrder = $dataPaidorder->count();
+
+        $dataFix = $dataPaidorder->map(function ($item) {
+            foreach ($item as $key => $value) {
+                if (is_null($value)) {
+                    $item->$key = "";
+                }
+            }
+            return $item;
+        });
+
+        broadcast(new SendMessage($dataFix->toArray(), $totalPaidOrder));
+
+        return response()->json([
+            'message' => 'Order new event sent!',
+            // 'count' => $totalPaidOrder,
+            // 'dataorder' => $dataFix
+        ]);
+    }
+
+    // public function send()
+    // {
+    //     $this->broadcastPaidOrdersForUser(auth()->user()->id);
+
+    //     return response()->json(['message' => 'Order paid event sent!']);
+    // }
 }

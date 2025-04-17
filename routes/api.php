@@ -44,6 +44,7 @@ Route::get('/booking/{kode_pemesanan}', [OrderController::class, 'get_order']);
 Route::post('/invoiceCreate', [OrderController::class, 'invoiceCreate']);
 Route::get('/invoice/{no_invoice}', [OrderController::class, 'get_invoice']);
 Route::post('/midtrans-callback', [OrderController::class, 'handleMidtransCallback']);
+// Route::get('/countOrder', [OrderController::class, 'countOrder'])->middleware('auth:sanctum');
 
 
 Route::middleware('auth:sanctum')->post('/logout', [LoginController::class, 'logout']);
@@ -82,4 +83,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/valueProperty', [ValueController::class, 'value_property']);
 
     Route::get('/data_orders', [DataOrderController::class, 'get_data_order']);
+    // Route::get('/pay-order', [OrderController::class, 'payOrder']);
+
 });
+
+Route::get('/send', [OrderController::class, 'send'])->middleware('auth:sanctum');
+Route::get('/countOrder', [OrderController::class, 'countOrder'])->middleware('auth:sanctum');
+
+// Route::get('/send', [OrderController::class, 'send']);
