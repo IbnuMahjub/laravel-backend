@@ -314,6 +314,8 @@ class OrderController extends Controller
 
     public function send()
     {
+        Log::info('📡 send() method called by user ID: ' . auth()->user()->id);
+
         $dataPaidorder = DB::table('tr_order as to2')
             ->join('tr_property as tp', 'to2.property_id', '=', 'tp.id')
             ->join('users as u', 'tp.user_id', '=', 'u.id')
@@ -341,6 +343,8 @@ class OrderController extends Controller
 
         $totalPaidOrder = $dataPaidorder->count();
 
+        Log::info('📦 Total paid order found: ' . $totalPaidOrder);
+
         $dataFix = $dataPaidorder->map(function ($item) {
             foreach ($item as $key => $value) {
                 if (is_null($value)) {
@@ -350,14 +354,62 @@ class OrderController extends Controller
             return $item;
         });
 
+        Log::info('📤 Broadcasting SendMessage event...');
+
         broadcast(new SendMessage($dataFix->toArray(), $totalPaidOrder));
+
+        Log::info('✅ SendMessage event broadcasted.');
 
         return response()->json([
             'message' => 'Order new event sent!',
-            // 'count' => $totalPaidOrder,
-            // 'dataorder' => $dataFix
         ]);
     }
+    // public function send()
+    // {
+    //     $dataPaidorder = DB::table('tr_order as to2')
+    //         ->join('tr_property as tp', 'to2.property_id', '=', 'tp.id')
+    //         ->join('users as u', 'tp.user_id', '=', 'u.id')
+    //         ->where('to2.status', 'paid')
+    //         ->where('u.id', auth()->user()->id)
+    //         ->select(
+    //             'to2.kode_pemesanan',
+    //             'to2.user_id',
+    //             'to2.username',
+    //             'to2.status',
+    //             'to2.created_at as waktu_pemesanan',
+    //             'to2.property_id',
+    //             'to2.unit_id',
+    //             'to2.name_property',
+    //             'to2.harga_unit',
+    //             'to2.jumlah_kamar',
+    //             'to2.catatan',
+    //             'to2.tanggal_check_in',
+    //             'to2.tanggal_check_out',
+    //             'to2.jumlah_hari',
+    //             'tp.name_property as nama_properti_asli',
+    //             'u.name as owner_property'
+    //         )
+    //         ->get();
+
+    //     $totalPaidOrder = $dataPaidorder->count();
+
+    //     $dataFix = $dataPaidorder->map(function ($item) {
+    //         foreach ($item as $key => $value) {
+    //             if (is_null($value)) {
+    //                 $item->$key = "";
+    //             }
+    //         }
+    //         return $item;
+    //     });
+
+    //     broadcast(new SendMessage($dataFix->toArray(), $totalPaidOrder));
+
+    //     return response()->json([
+    //         'message' => 'Order new event sent!',
+    //         // 'count' => $totalPaidOrder,
+    //         // 'dataorder' => $dataFix
+    //     ]);
+    // }
 
     // public function send()
     // {
