@@ -155,7 +155,12 @@ class PropertiController extends Controller
                 ],
                 'alamat' => $properti->alamat,
                 'image' => $imageUrl,
-                'imageOri' => $properti->image
+                'imageOri' => $properti->image,
+                'negara' => $properti->negara,
+                'kota' => $properti->kota,
+                'kecamatan' => $properti->kecamatan ? $properti->kecamatan : "",
+                'latitude' => $properti->latitude ? $properti->latitude : "",
+                'longitude' => $properti->longitude ? $properti->longitude : "",
             ];
             return sendResponse('success', $dataProperti, 'all data properti');
         } catch (\Exception $e) {
@@ -247,6 +252,11 @@ class PropertiController extends Controller
                 'category_id' => 'required|exists:tm_category,id',
                 'alamat' => 'required|string',
                 'image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+                'negara' => 'required|string',
+                'kota' => 'required|string',
+                'kecamatan' => 'required|string',
+                'latitude' => 'required|string',
+                'longitude' => 'required|string',
             ]);
 
             if ($request->hasFile('image')) {
@@ -263,7 +273,7 @@ class PropertiController extends Controller
             $properti->slug = null;
             $properti->save();
 
-            $imageUrl = $properti->image ? Storage::url($properti->image) : null;
+            $imageUrl = $properti->image ? Storage::url($properti->image) : "";
 
             $properti = tr_property::with('category')->find($id);
 
@@ -281,6 +291,12 @@ class PropertiController extends Controller
                     'name_category' => $properti->name_category,
                     'alamat' => $properti->alamat,
                     'image' => $imageUrl,
+                    'negara' => $properti->negara,
+                    'kota' => $properti->kota,
+                    'kecamatan' => $properti->kecamatan,
+                    'latitude' => $properti->latitude,
+                    'longitude' => $properti->longitude
+
                 ],
             ], 200);
         } catch (\Exception $e) {
