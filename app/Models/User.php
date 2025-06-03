@@ -60,5 +60,20 @@ class User extends Authenticatable
         return $this->belongsTo(tm_roleuser::class, 'id_role_user');
     }
 
+    public function sentChats()
+    {
+        return $this->hasMany(tr_chat::class, 'sender_id');
+    }
 
+    // Chat yang diterima user ini
+    public function receivedChats()
+    {
+        return $this->hasMany(tr_chat::class, 'receiver_id');
+    }
+
+    // Kalau ada relasi dengan chat_room_members
+    public function chatRooms()
+    {
+        return $this->belongsToMany(tr_chat_room::class, 'chat_room_members');
+    }
 }
