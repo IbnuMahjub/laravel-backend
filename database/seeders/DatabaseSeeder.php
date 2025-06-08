@@ -6,7 +6,11 @@ namespace Database\Seeders;
 
 use App\Models\tm_category;
 use App\Models\tm_roleuser;
+use App\Models\tr_chat;
+use App\Models\tr_chat_room;
+use App\Models\tr_chat_room_members;
 use App\Models\tr_invoice;
+use App\Models\tr_messages;
 use App\Models\tr_order;
 use App\Models\tr_property;
 use App\Models\tr_unit;
@@ -96,18 +100,23 @@ class DatabaseSeeder extends Seeder
         ]);
 
 
-        // $faker = Faker::create();
+        $faker = Faker::create();
 
-        // for ($i = 1; $i <= 500; $i++) {
-        //     tr_property::create([
-        //         'name_property' => $faker->company . ' Property',
-        //         'slug' => 'property-' . $i,
-        //         'name_category' => $faker->randomElement(['Pendidikan', 'Olahraga', 'Kesehatan', 'Liburan']),
-        //         'category_id' => $faker->numberBetween(1, 2),
-        //         'user_id' => $faker->numberBetween(2, 3),
-        //         'alamat' => $faker->address
-        //     ]);
-        // }
+        for ($i = 1; $i <= 10; $i++) {
+            tr_property::create([
+                'name_property' => $faker->company . ' Property',
+                'slug' => 'property-' . $i,
+                'name_category' => $faker->randomElement(['Pendidikan', 'Olahraga', 'Kesehatan', 'Liburan']),
+                'category_id' => $faker->numberBetween(1, 2),
+                'user_id' => $faker->numberBetween(2, 3),
+                // 'negara' => $faker->country,
+                // 'kota' => $faker->city,
+                // 'kecamatan' => $faker->city,
+                // 'latitude' => $faker->latitude,
+                // 'longitude' => $faker->longitude,
+                'alamat' => $faker->address
+            ]);
+        }
 
         tr_unit::create([
             'property_id' => 1,
@@ -179,5 +188,54 @@ class DatabaseSeeder extends Seeder
         //         'user_id' => $userId,
         //     ]);
         // }
+
+        // $room = tr_chat_room::create([
+        //     'name' => 'General Chat Room',
+        //     'created_at' => now(),
+        //     'updated_at' => now(),
+        // ]);
+
+        // tr_chat_room_members::create([
+        //     'room_id' => $room->id,
+        //     'user_id' => 1,
+        //     'created_at' => now(),
+        //     'updated_at' => now(),
+        // ]);
+
+        // tr_chat_room_members::create([
+        //     'room_id' => $room->id,
+        //     'user_id' => 2,
+        //     'created_at' => now(),
+        //     'updated_at' => now(),
+        // ]);
+
+        // tr_chat::create([
+        //     'sender_id' => 1,
+        //     'receiver_id' => 2,
+        //     'message' => 'Halo bro, kabar ini sekar ya?',
+        //     'message_type' => 'text',
+        //     'is_read' => false,
+        //     'created_at' => now(),
+        //     'updated_at' => now(),
+        // ]);
+        // tr_chat::create([
+        //     'sender_id' => 3,
+        //     'receiver_id' => 2,
+        //     'message' => 'Halo bro, kabar ini ibnu?',
+        //     'message_type' => 'text',
+        //     'is_read' => false,
+        //     'created_at' => now(),
+        //     'updated_at' => now(),
+        // ]);
+
+        // tr_chat::create([
+        //     'sender_id' => 2,
+        //     'receiver_id' => 1,
+        //     'message' => 'Mantap bro! Kabar baik',
+        //     'message_type' => 'text',
+        //     'is_read' => false,
+        //     'created_at' => now(),
+        //     'updated_at' => now(),
+        // ]);
     }
 }

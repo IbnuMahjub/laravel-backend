@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DataOrderController;
 use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\LoginController;
@@ -85,6 +86,26 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/data_orders', [DataOrderController::class, 'get_data_order']);
     // Route::get('/pay-order', [OrderController::class, 'payOrder']);
 
+
+    Route::get('/inbox', [ChatController::class, 'getInbox']);
+    Route::get('/dataChat/{targetId}', [ChatController::class, 'get_dataChat']);
+
+    Route::get('/dataChatByUser/{userId}', [ChatController::class, 'get_dataChat_byUser']);
+
+
+    // bug
+    Route::get('/dataChatByUser', [ChatController::class, 'get_dataChat_byAuthUser']);
+
+    // Route::get('/dataChat/{userId}/{targetId}', [ChatController::class, 'get_dataChat']);
+    Route::get('/dataChatByReceiver', [ChatController::class, 'get_dataChatByReceiver']);
+
+
+    // Route::post('/kirim_chat', [ChatController::class, 'send_chat']);
+    Route::post('/kirim_chat', [ChatController::class, 'kirim_chat']);
+    Route::post('/n_kirim_chat', [ChatController::class, 'n_kirim_chat']);
+    Route::get('/daftar_user', [ChatController::class, 'listChatWithLastMessages']);
+    Route::get('/last_chat', [ChatController::class, 'lastChat']);
+    Route::get('/room/{user_id}', [ChatController::class, 'room']);
 });
 
 Route::get('/send', [OrderController::class, 'send'])->middleware('auth:sanctum');

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\tm_category;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class CategoryController extends Controller
 {
@@ -24,14 +25,21 @@ class CategoryController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name_category' => 'required|string|max:255|unique:tm_category,name_category',
-        ], [
-            'name_category.unique' => 'name categories sudah ada.',
-        ]);
+        try {
+            $validated = $request->validate([
+                'name_category' => 'required|string|max:255|unique:tm_category,name_category',
+            ], [
+                'name_category.unique' => 'name categories sudah ada.',
+            ]);
 
-        $category = tm_category::create($validated);
-        return response()->json($category, 201);
+            $category = tm_category::create($validated);
+            return response()->json($category, 201);
+        } catch (ValidationException $th) {
+            return response()->json([
+                'status' => false,
+                'message' => $th->errors()
+            ]);
+        }
     }
 
     public function update(Request $request, $id)

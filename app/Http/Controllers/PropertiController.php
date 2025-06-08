@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\PropertyCollection;
+use App\Http\Resources\PropertyResource;
 use App\Models\tm_category;
 use App\Models\tr_property;
 use App\Models\tr_unit;
@@ -17,33 +19,19 @@ class PropertiController extends Controller
         try {
             $properti = tr_property::where('is_delete', 0)
                 ->with('category')
-                ->get();
-            $dataProperti = $properti->map(function ($properti) {
-                $imageUrl = $properti->image ? Storage::url($properti->image) : "";
-                return [
-                    'id' => $properti->id,
-                    'name_property' => $properti->name_property,
-                    'name_category' => $properti->name_category,
-                    'slug' => $properti->slug,
-                    'negara' => $properti->negara,
-                    'kota' => $properti->kota,
-                    'kecamatan' => $properti->kecamatan,
-                    'latitude' => $properti->latitude,
-                    'longitude' => $properti->longitude,
-                    'alamat' => $properti->alamat,
-                    'image' => $imageUrl,
-                    'data_category' => [
-                        'id' => $properti->category ? $properti->category->id : "",
-                        'name_category' => $properti->category ? $properti->category->name_category : ""
-                    ],
-                ];
-            });
+                ->paginate(10);
+            // ->get();
 
             if ($properti->isEmpty()) {
-                return sendResponse('kosong', []);
+                return sendResponse('kosong', [], 'tidak tersedia');
             }
-
-            return sendResponse('success', $dataProperti, 'all data properti');
+            // return sendResponse('success', PropertyResource::collection($properti), 'all data properti');
+            return sendResponse('success', PropertyResource::collection($properti), [
+                'current_page' => $properti->currentPage(),
+                'last_page' => $properti->lastPage(),
+                'per_page' => $properti->perPage(),
+                'total' => $properti->total()
+            ], 'all data properti');
         } catch (\Throwable $th) {
             return response()->json([
                 'status' => 'error',
@@ -57,39 +45,12 @@ class PropertiController extends Controller
             $showProperty = tr_property::with(['category', 'unit'])->where('slug', $slug)->first();
 
             if (!$showProperty) {
-                return sendResponse('kosong', []);
+                return sendResponse('kosong', [], 'tidak tersedia');
             }
 
-            $imageUrl = $showProperty->image ? Storage::url($showProperty->image) : "";
+            // $imageUrl = $showProperty->image ? Storage::url($showProperty->image) : "";
 
-            $units = $showProperty->unit->map(function ($unit) {
-                return [
-                    'id' => $unit->id,
-                    'name_property' => $unit->name_property,
-                    'tipe' => $unit->tipe,
-                    'harga_unit' => $unit->harga_unit,
-                    'jumlah_kamar' => $unit->jumlah_kamar,
-                    'deskripsi' => $unit->deskripsi,
-                    'images' => $unit->images ? array_map(fn($img) => Storage::url($img), $unit->images) : [],
-                ];
-            });
-
-            $dataProperti = [
-                'id' => $showProperty->id,
-                'name_property' => $showProperty->name_property,
-                'name_category' => $showProperty->category->name_category ? $showProperty->category->name_category : "",
-                'slug' => $showProperty->slug,
-                'image' => $imageUrl,
-                'negara' => $showProperty->negara,
-                'kota' => $showProperty->kota,
-                'alamat' => $showProperty->alamat,
-                'kecamatan' => $showProperty->kecamatan,
-                'latitude' => $showProperty->latitude,
-                'longitude' => $showProperty->longitude,
-                'units' => $units,
-            ];
-
-            return sendResponse('success', $dataProperti, 'all data properti');
+            return sendResponse('success', new PropertyResource($showProperty), 'data properti detail ' .  $showProperty->name_property);
         } catch (\Throwable $th) {
             return response()->json([
                 'status' => 'error',
@@ -105,32 +66,22 @@ class PropertiController extends Controller
             $properti = tr_property::where('is_delete', 0)
                 ->where('user_id', auth()->user()->id)
                 ->with('category')
-                ->get();
-
-            $dataProperti = $properti->map(function ($properti) {
-                $imageUrl = $properti->image ? Storage::url($properti->image) : "";
-                return [
-                    'id' => $properti->id,
-                    'name_property' => $properti->name_property,
-                    'name_category' => $properti->name_category,
-                    'slug' => $properti->slug,
-                    'data_category' => [
-                        'id' => $properti->category ? $properti->category->id : "",
-                        'name_category' => $properti->category ? $properti->category->name_category : ""
-                    ],
-                    'alamat' => $properti->alamat,
-                    'image' => $imageUrl
-                ];
-            });
-
+                ->paginate(10);
             if ($properti->isEmpty()) {
-                return sendResponse('kosong', []);
+                return sendResponse('kosong', [], 'tidak tersedia');
             }
 
-            return sendResponse('success', $dataProperti, 'all data properti');
+            // return new PropertyCollection($properti);
+
+            // return sendResponse('success', PropertyResource::collection($properti), 'all data properti');
+            return sendResponse('success', PropertyResource::collection($properti), [
+                'current_page' => $properti->currentPage(),
+                'last_page' => $properti->lastPage(),
+                'per_page' => $properti->perPage(),
+                'total' => $properti->total(),
+            ], 'all data properti');
         } catch (\Exception $e) {
             return response()->json([
-                'status' => 'error',
                 'message' => 'An error occurred: ' . $e->getMessage()
             ], 500);
         }
@@ -144,25 +95,26 @@ class PropertiController extends Controller
             if (!$properti) {
                 return sendResponse('kosong', [], 'tidak tersedia');
             }
-            $imageUrl = $properti->image ? Storage::url($properti->image) : null;
-            $dataProperti = [
-                'id' => $properti->id,
-                'name_property' => $properti->name_property,
-                'slug' => $properti->slug,
-                'category' => [
-                    'id' => $properti->category ? $properti->category->id : "",
-                    'name_category' => $properti->category ? $properti->category->name_category : ""
-                ],
-                'alamat' => $properti->alamat,
-                'image' => $imageUrl,
-                'imageOri' => $properti->image,
-                'negara' => $properti->negara,
-                'kota' => $properti->kota,
-                'kecamatan' => $properti->kecamatan ? $properti->kecamatan : "",
-                'latitude' => $properti->latitude ? $properti->latitude : "",
-                'longitude' => $properti->longitude ? $properti->longitude : "",
-            ];
-            return sendResponse('success', $dataProperti, 'all data properti');
+            // $imageUrl = $properti->image ? Storage::url($properti->image) : null;
+            // $dataProperti = [
+            //     'id' => $properti->id,
+            //     'name_property' => $properti->name_property,
+            //     'slug' => $properti->slug,
+            //     'category' => [
+            //         'id' => $properti->category ? $properti->category->id : "",
+            //         'name_category' => $properti->category ? $properti->category->name_category : ""
+            //     ],
+            //     'alamat' => $properti->alamat,
+            //     'image' => $imageUrl,
+            //     'imageOri' => $properti->image,
+            //     'negara' => $properti->negara,
+            //     'kota' => $properti->kota,
+            //     'kecamatan' => $properti->kecamatan ? $properti->kecamatan : "",
+            //     'latitude' => $properti->latitude ? $properti->latitude : "",
+            //     'longitude' => $properti->longitude ? $properti->longitude : "",
+            // ];
+            // return sendResponse('success', $dataProperti, 'all data properti');
+            return sendResponse('success', new PropertyResource($properti), 'data properti detail ' .  $properti->name_property);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
@@ -195,37 +147,13 @@ class PropertiController extends Controller
             $savedProperti = tr_property::create($validated);
 
             $properti = tr_property::with('category')->find($savedProperti->id);
-
-            $imageUrl = $properti->image ? Storage::url($properti->image) : null;
-            $response = [
-                'id' => $properti->id,
-                'name_property' => $properti->name_property,
-                'slug' => $properti->slug,
-                'category' => [
-                    'id' => $properti->category ? $properti->category->id : "",
-                    'name_category' => $properti->category ? $properti->category->name_category : "",
-                ],
-                'category_id' => $properti->category_id,
-                'name_category' => $properti->name_category,
-                'negara' => $properti->negara,
-                'kota' => $properti->kota,
-                'kecamatan' => $properti->kecamatan,
-                'latitude' => $properti->latitude,
-                'longitude' => $properti->longitude,
-                'alamat' => $properti->alamat,
-                'image' => $imageUrl,
-            ];
-
-            return response()->json([
-                'status' => 'success',
-                'data' => $response,
-            ], 201);
+            return sendResponse('success', new PropertyResource($properti), 'Berhasil menambahkan data properti ' .  $properti->name_property);
         } catch (ValidationException $e) {
             return response()->json([
-                'status' => 'error',
+                'status' => false,
                 'message' => 'Validation failed',
                 'errors' => $e->errors(),
-            ], 400);
+            ]);
         } catch (Exception $e) {
             return response()->json([
                 'status' => 'error',
@@ -273,32 +201,34 @@ class PropertiController extends Controller
             $properti->slug = null;
             $properti->save();
 
-            $imageUrl = $properti->image ? Storage::url($properti->image) : "";
+            // $imageUrl = $properti->image ? Storage::url($properti->image) : "";
 
             $properti = tr_property::with('category')->find($id);
 
-            return response()->json([
-                'status' => 'success',
-                'data' => [
-                    'id' => $properti->id,
-                    'name_property' => $properti->name_property,
-                    'slug' => $properti->slug,
-                    'category' => [
-                        'id' => $properti->category ? $properti->category->id : "",
-                        'name_category' => $properti->category ? $properti->category->name_category : ""
-                    ],
-                    'category_id' => $properti->category_id,
-                    'name_category' => $properti->name_category,
-                    'alamat' => $properti->alamat,
-                    'image' => $imageUrl,
-                    'negara' => $properti->negara,
-                    'kota' => $properti->kota,
-                    'kecamatan' => $properti->kecamatan,
-                    'latitude' => $properti->latitude,
-                    'longitude' => $properti->longitude
+            // return response()->json([
+            //     'status' => 'success',
+            //     'data' => [
+            //         'id' => $properti->id,
+            //         'name_property' => $properti->name_property,
+            //         'slug' => $properti->slug,
+            //         'category' => [
+            //             'id' => $properti->category ? $properti->category->id : "",
+            //             'name_category' => $properti->category ? $properti->category->name_category : ""
+            //         ],
+            //         'category_id' => $properti->category_id,
+            //         'name_category' => $properti->name_category,
+            //         'alamat' => $properti->alamat,
+            //         'image' => $imageUrl,
+            //         'negara' => $properti->negara,
+            //         'kota' => $properti->kota,
+            //         'kecamatan' => $properti->kecamatan,
+            //         'latitude' => $properti->latitude,
+            //         'longitude' => $properti->longitude
 
-                ],
-            ], 200);
+            //     ],
+            // ], 200);
+
+            return sendResponse('success', new PropertyResource($properti), 'berhasil update ' .  $properti->name_property);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
