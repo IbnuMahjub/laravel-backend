@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ChatMessageSent;
 use App\Models\tr_chat;
 use App\Models\tr_pesan;
 use App\Models\User;
@@ -375,14 +376,16 @@ class ChatController extends Controller
     {
         try {
             $validated = $request->validate([
-                // 'incoming_msg_id' => 'required|string',
-                'outgoing_msg_id' => 'required|string',
+                'outgoing_msg_id' => 'required|string', // sebenarnya ini penerima
                 'msg'             => 'required|string',
             ]);
-            $validated['incoming_msg_id'] = auth()->user()->id;
 
-
-            $chat = tr_pesan::create($validated);
+            // Betulkan posisi sender & receiver
+            $chat = tr_pesan::create([
+                'incoming_msg_id' => $request->outgoing_msg_id,      // penerima (dari request)
+                'outgoing_msg_id' => auth()->user()->id,             // pengirim (yang login)
+                'msg'             => $validated['msg'],
+            ]);
 
             return response()->json([
                 'status'  => 'success',
@@ -396,6 +399,52 @@ class ChatController extends Controller
             ], 500);
         }
     }
+
+    public function listChatWithLastMessages()
+    {
+        try {
+            $authId = auth()->id();
+
+            // Ambil semua user selain yang login
+            $users = User::where('id', '!=', $authId)->get();
+
+            $result = $users->map(function ($user) use ($authId) {
+                // Ambil pesan terakhir antara user login dan user ini
+                $lastChat = DB::table('tr_pesans')
+                    ->where(function ($query) use ($user) {
+                        $query->where('incoming_msg_id', $user->id)
+                            ->orWhere('outgoing_msg_id', $user->id);
+                    })
+                    ->where(function ($query) use ($authId) {
+                        $query->where('incoming_msg_id', $authId)
+                            ->orWhere('outgoing_msg_id', $authId);
+                    })
+                    ->orderByDesc('id')
+                    ->first();
+
+                // Gabungkan data user + last chat
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'last_chat' => $lastChat,
+                ];
+            });
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'List chat with last messages',
+                'data' => $result
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Something went wrong.',
+                'error' => $th->getMessage()
+            ], 500);
+        }
+    }
+
 
     public function listchat()
     {
@@ -419,30 +468,6 @@ class ChatController extends Controller
             ], 500);
         }
     }
-
-
-    // public function room($incomingId)
-    // {
-    //     $authId = Auth::id();
-
-    //     $roomChat = DB::table('tr_pesans as tp')
-    //         ->leftJoin('users', 'users.id', '=', 'tp.outgoing_msg_id')
-    //         ->where(function ($query) use ($authId, $incomingId) {
-    //             $query->where('tp.outgoing_msg_id', $authId)
-    //                 ->where('tp.incoming_msg_id', $incomingId);
-    //         })
-    //         ->orWhere(function ($query) use ($authId, $incomingId) {
-    //             $query->where('tp.outgoing_msg_id', $incomingId)
-    //                 ->where('tp.incoming_msg_id', $authId);
-    //         })
-    //         ->orderBy('tp.id')
-    //         ->get();
-
-    //     return response()->json([
-    //         'status' => 'success',
-    //         'data' => $roomChat
-    //     ]);
-    // }
 
     public function room($incomingId)
     {
@@ -472,6 +497,7 @@ class ChatController extends Controller
             'data' => $roomChat
         ]);
     }
+
 
 
     public function lastChat(Request $request)

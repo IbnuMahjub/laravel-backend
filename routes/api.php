@@ -103,7 +103,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Route::post('/kirim_chat', [ChatController::class, 'send_chat']);
     Route::post('/kirim_chat', [ChatController::class, 'kirim_chat']);
     Route::post('/n_kirim_chat', [ChatController::class, 'n_kirim_chat']);
-    Route::get('/daftar_user', [ChatController::class, 'listchat']);
+    Route::get('/daftar_user', [ChatController::class, 'listChatWithLastMessages']);
     Route::get('/last_chat', [ChatController::class, 'lastChat']);
     Route::get('/room/{user_id}', [ChatController::class, 'room']);
 });
